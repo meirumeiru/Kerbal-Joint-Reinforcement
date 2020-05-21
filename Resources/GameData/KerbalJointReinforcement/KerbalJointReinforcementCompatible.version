@@ -1,7 +1,7 @@
 {
   "NAME"     : "Kerbal Joint Reinforcement",
   "DOWNLOAD" : "https://github.com/meirumeiru/Kerbal-Joint-Reinforcement/releases",
-  "URL"      : "https://raw.githubusercontent.com/meirumeiru/Kerbal-Joint-Reinforcement/master/GameData/KerbalJointReinforcement/KerbalJointReinforcementCompatible.version",
+  "URL"      : "https://github.com/meirumeiru/Kerbal-Joint-Reinforcement/raw/master/Resources/GameData/KerbalJointReinforcement/KerbalJointReinforcementCompatible.version",
   "GITHUB" : {
       "USERNAME"   : "meirumeiru",
       "REPOSITORY" : "Kerbal-Joint-Reinforcement"
