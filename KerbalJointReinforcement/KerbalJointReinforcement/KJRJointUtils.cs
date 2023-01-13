@@ -15,30 +15,19 @@ namespace KerbalJointReinforcement
 		public static bool reinforceDecouplersFurther = false;
 		public static bool reinforceLaunchClampsFurther = false;
 		public static bool useVolumeNotArea = false;
+		public static float massForAdjustment = 0.001f;
+		public static float stiffeningExtensionMassRatioThreshold = 5;
+		public static float decouplerAndClampJointStrength = float.PositiveInfinity;
 
 		public static float angularDriveSpring = 0;
 		public static float angularDriveDamper = 0;
-		public static float angularMaxForceFactor = 0;
 
 		public static float breakForceMultiplier = 1;
 		public static float breakTorqueMultiplier = 1;
-
 		public static float breakStrengthPerArea = 40;
 		public static float breakTorquePerMOI = 40000;
-		public static float surfaceAttachAreaMult = 10;
-		public static float surfaceAttachMOIMult = 10;
-
-		public static float decouplerAndClampJointStrength = float.PositiveInfinity;
-
-		public static float stiffeningExtensionMassRatioThreshold = 5;
-
-		public static bool useOldJointCreation = false;
 
 		public static bool debug = false;
-
-		public static List<string> decouplerStiffeningExtensionType = new List<string>(); // FEHLER, evtl. später rausschmeissen
-
-		public static float massForAdjustment = 0.001f;
 
 		public static void LoadConstants()
 		{
@@ -51,11 +40,15 @@ namespace KerbalJointReinforcement
 			reinforceLaunchClampsFurther = config.GetValue<bool>("reinforceLaunchClampsFurther", true);
 			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
 
+			massForAdjustment = (float)config.GetValue<double>("massForAdjustment", 1);
+			stiffeningExtensionMassRatioThreshold = (float)config.GetValue<double>("stiffeningExtensionMassRatioThreshold", 5);
+
+			decouplerAndClampJointStrength = (float)config.GetValue<double>("decouplerAndClampJointStrength", float.PositiveInfinity);
+			if(decouplerAndClampJointStrength < 0)
+				decouplerAndClampJointStrength = float.PositiveInfinity;
+
 			angularDriveSpring = (float)config.GetValue<double>("angularDriveSpring");
 			angularDriveDamper = (float)config.GetValue<double>("angularDriveDamper");
-			angularMaxForceFactor = (float)config.GetValue<double>("angularMaxForceFactor");
-			if(angularMaxForceFactor < 0)
-				angularMaxForceFactor = float.MaxValue;
 
 			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 1);
 			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 1);
@@ -63,37 +56,12 @@ namespace KerbalJointReinforcement
 			breakStrengthPerArea = (float)config.GetValue<double>("breakStrengthPerArea", 40);
 			breakTorquePerMOI = (float)config.GetValue<double>("breakTorquePerMOI", 40000);
 
-			decouplerAndClampJointStrength = (float)config.GetValue<double>("decouplerAndClampJointStrength", float.PositiveInfinity);
-			if(decouplerAndClampJointStrength < 0)
-				decouplerAndClampJointStrength = float.PositiveInfinity;
-
-			stiffeningExtensionMassRatioThreshold = (float)config.GetValue<double>("stiffeningExtensionMassRatioThreshold", 5);
-
-			massForAdjustment = (float)config.GetValue<double>("massForAdjustment", 1);
-
-			decouplerStiffeningExtensionType.Clear();
-
-			int i = 0;
-			while(true)
-			{
-				string tmpDecoupler = config.GetValue("decouplerStiffeningExtensionType" + i, "");
-
-				if(tmpDecoupler == "")
-					break;
-
-				decouplerStiffeningExtensionType.Add(tmpDecoupler);
-
-				i++;
-			}
-
-			useOldJointCreation = config.GetValue<bool>("useOldJointCreation", false);
-
 			debug = config.GetValue<bool>("debug", false);
 
 			if(debug)
 			{
 				StringBuilder debugString = new StringBuilder();
-				debugString.AppendLine("\n\rAngular Drive: \n\rSpring: " + angularDriveSpring + "\n\rDamp: " + angularDriveDamper + "\n\rMax Force Factor: " + angularMaxForceFactor);
+				debugString.AppendLine("\n\rAngular Drive: \n\rSpring: " + angularDriveSpring + "\n\rDamp: " + angularDriveDamper);
 
 				debugString.AppendLine("\n\rJoint Strength Multipliers: \n\rForce Multiplier: " + breakForceMultiplier + "\n\rTorque Multiplier: " + breakTorqueMultiplier);
 				debugString.AppendLine("Joint Force Strength Per Unit Area: " + breakStrengthPerArea);
@@ -108,10 +76,6 @@ namespace KerbalJointReinforcement
 				debugString.AppendLine("Use Volume For Calculations, Not Area: " + useVolumeNotArea);
 
 				debugString.AppendLine("\n\rMass For Joint Adjustment: " + massForAdjustment);
-
-				debugString.AppendLine("\n\rDecoupler Stiffening Extension Types");
-				foreach(string s in decouplerStiffeningExtensionType)
-					debugString.AppendLine(s);
 
 				debugString.AppendLine("\n\rDecoupler Stiffening Extension Mass Ratio Threshold: " + stiffeningExtensionMassRatioThreshold);
 
@@ -297,30 +261,12 @@ namespace KerbalJointReinforcement
 			return true;
 		}
 
-		public static bool GetsDecouplerStiffeningExtension(Part p)
-		{
-			string typeString = p.GetType().ToString();
-
-			foreach(string s in decouplerStiffeningExtensionType)
-				if(typeString == s)
-					return true;
-
-			foreach(string s in decouplerStiffeningExtensionType)
-				if(p.Modules.Contains(s))
-					return true;
-
-			return false;
-		}
-
 		public static List<Part> DecouplerPartStiffeningListParents(Part p)
 		{
 			List<Part> tmpPartList = new List<Part>();
 
 			// non-physical parts are skipped over by attachJoints, so do the same
 			bool extend = (p.physicalSignificance == Part.PhysicalSignificance.NONE);
-
-			if(!extend)
-				extend = GetsDecouplerStiffeningExtension(p);
 
 			List<Part> newAdditions = new List<Part>();
 
@@ -365,9 +311,6 @@ namespace KerbalJointReinforcement
 
 			// non-physical parts are skipped over by attachJoints, so do the same
 			bool extend = (p.physicalSignificance == Part.PhysicalSignificance.NONE);
-
-			if(!extend)
-				extend = GetsDecouplerStiffeningExtension(p);
 
 			List<Part> newAdditions = new List<Part>();
 
@@ -430,12 +373,9 @@ namespace KerbalJointReinforcement
 
 			newJoint.anchor = Vector3.zero;
 
-			if(!KJRJointUtils.useOldJointCreation)
-			{
-				newJoint.autoConfigureConnectedAnchor = false;
-				newJoint.connectedAnchor = Quaternion.Inverse(linkPart.orgRot) * (p.orgPos - linkPart.orgPos);
-				newJoint.SetTargetRotationLocal(Quaternion.Inverse(p.transform.rotation) * linkPart.transform.rotation * (Quaternion.Inverse(linkPart.orgRot) * p.orgRot), Quaternion.identity);
-			}
+			newJoint.autoConfigureConnectedAnchor = false;
+			newJoint.connectedAnchor = Quaternion.Inverse(linkPart.orgRot) * (p.orgPos - linkPart.orgPos);
+			newJoint.SetTargetRotationLocal(Quaternion.Inverse(p.transform.rotation) * linkPart.transform.rotation * (Quaternion.Inverse(linkPart.orgRot) * p.orgRot), Quaternion.identity);
 
 			newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Free;
 			newJoint.angularYMotion = newJoint.angularZMotion = newJoint.angularXMotion = ConfigurableJointMotion.Free;

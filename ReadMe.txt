@@ -1,5 +1,5 @@
-﻿Kerbal Joint Reinforcement Next, v4.0.0
-===============================
+﻿Kerbal Joint Reinforcement Next, v4.1
+=====================================
 
 Physics stabilizer plugin for Kerbal Space Program
 
@@ -17,8 +17,6 @@ The source folder simply contains the source code (in C#) for the plugin.  If yo
 ****** EXCITING FEATURES! ******
 ********************************
 
-
-
 -- Physics Easing
 
 	- Slowly dials up external forces (gravity, centrifugal, coriolis) when on the surface of a planet, reducing the initial stress during loading
@@ -32,25 +30,25 @@ The source folder simply contains the source code (in C#) for the plugin.  If yo
 
 	- Parts connected to a decoupler will be connected to each other, reducing flex at the connection to reasonable levels
 
-
 -- Stiffen launch clamp connections
 
 	- Less vehicle movement on vessel initialization
 	- Warning: may cause spontaneous rocket disintegration if rocket is too large and overconstrained (far too many lanuch clamps; their connections will fight each other and give rise to phantom forces)
-
 
 -- Increase stiffness and strengths of connections
 
 	- Larger parts will have stiffer connections to balance their larger masses / sizes
 	- Sequential parts in a stack will be connected with a stiff, but weak connection to add even more stiffness and counteract wobble
 
--- Option to make connection strengths weaker to counteract increases in stiffness
+-- Anti-Drift
 
+	- The system works actively against drifting parts.
+
+-- Option to make connection strengths weaker to counteract increases in stiffness
 
 -- Joint Stiffness parameters can be tweaked in included config.xml file
 
 	- config value documentation:
-
 
 General Values
 
@@ -72,7 +70,6 @@ Angular "Drive" Values (universally scales angular strength of connections)
 
 	float	angularDriveSpring		5e12			--Factor used to scale stiffness of angular connections
 	float	angularDriveDamper		25			--Factor used to scale damping of motion in angular connections
-	float	angularMaxForceFactor		-1			--Factor used to scale maximum force that can be applied before connection "gives out"; does not control joint strength; -1 makes this value infinite
 
 Joint Strength Values
 
@@ -83,27 +80,14 @@ Joint Strength Values
 	float	breakStrengthPerArea		1500			--Overrides above values if not equal to 1; joint strength is based on the area of the part and failure strength is equal to this value times connection area
 	float	breakTorquePerMOI		6000			--Same as above value, but for torques rather than forces and is based on the moment of inertia, not area
 
-Decoupler Stiffening Extension Types
-
-	Type	Name					Default Value		Action
-
-	string	decouplerStiffeningExtensionType0	ModuleEngines		--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-	string	decouplerStiffeningExtensionType1	ModuleEnginesFX		--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-	string	decouplerStiffeningExtensionType2	ModuleHybridEngine	--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-	string	decouplerStiffeningExtensionType3	ModuleHybridEngines	--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-	string	decouplerStiffeningExtensionType4	ModuleEngineConfigs	--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-
-These types are currently not used, but removing the a in front of them will cause KJR to make use of them again; their lack should not affect stiffening appreciably but does help reduce overhead and strange stiffening situations
-
-	string	adecouplerStiffeningExtensionType5	ModuleDecouple		--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-	string	adecouplerStiffeningExtensionType6	ModuleAnchoredDecoupler	--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-	string	adecouplerStiffeningExtensionType7	ProceduralFairingBase	--Decoupler stiffening will look for parts beyond this part type to add to stiffening
-
 
 ***********************
 ****** CHANGELOG ******
 ***********************
 
-v4.0.0	-> will be the new version of KJR, a complete re-development where just ideas are kept from old versions
+v4.1.x	-> better version in which joints are not built to keep parts in the place where they currently are, but where they should be according to the original positions
+		   this works against the part shift that could be observed in earlier versions and especially together with robotic parts
+
+v4.0.x	-> the new version of KJR, a complete re-development where just ideas are kept from old versions
 
 v3.x.x	-> previous KJR versions
