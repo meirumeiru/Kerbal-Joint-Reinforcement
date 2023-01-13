@@ -6,9 +6,9 @@
     <bool name="reinforceLaunchClampsFurther">1</bool>
     <bool name="useVolumeNotArea">1</bool>
     <bool name="debug">0</bool>
-	<double name="massForAdjustment">0.01</double>
-	<double name="stiffeningExtensionMassRatioThreshold">5</double>
-	<double name="decouplerAndClampJointStrength">-1</double>
+    <double name="massForAdjustment">0.01</double>
+    <double name="stiffeningExtensionMassRatioThreshold">5</double>
+    <double name="decouplerAndClampJointStrength">-1</double>
 
     <double name="angularDriveSpring">5e12</double>
     <double name="angularDriveDamper">25</double>

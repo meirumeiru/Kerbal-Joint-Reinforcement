@@ -13,9 +13,9 @@ Merge the GameData folder with the existing one in your KSP directory.  KSP will
 The source folder simply contains the source code (in C#) for the plugin.  If you didn't already know what it was, you don't need to worry about it; don't copy it over.
 
 
-********************************
-****** EXCITING FEATURES! ******
-********************************
+**********************
+****** FEATURES ******
+**********************
 
 -- Physics Easing
 
@@ -46,9 +46,16 @@ The source folder simply contains the source code (in C#) for the plugin.  If yo
 
 -- Option to make connection strengths weaker to counteract increases in stiffness
 
--- Joint Stiffness parameters can be tweaked in included config.xml file
+-- Parameters can be tweaked in included config.xml file
 
-	- config value documentation:
+
+********************************************
+****** config.xml value documentation ******
+********************************************
+
+Location of the file
+
+	Plugins\PluginData\KerbalJointReinforcementNext\config.xml
 
 General Values
 
@@ -66,19 +73,19 @@ General Values
 
 Angular "Drive" Values (universally scales angular strength of connections)
 
-	Type	Name				Default Value		Action
+	Type	Name					Default Value		Action
 
-	float	angularDriveSpring		5e12			--Factor used to scale stiffness of angular connections
-	float	angularDriveDamper		25			--Factor used to scale damping of motion in angular connections
+	float	angularDriveSpring			5e12			--Factor used to scale stiffness of angular connections
+	float	angularDriveDamper			25			--Factor used to scale damping of motion in angular connections
 
 Joint Strength Values
 
-	Type	Name				Default Value		Action
+	Type	Name					Default Value		Action
 
-	float	breakForceMultiplier		1			--Factor scales the failure strength (for forces) of joint connections; 1 gives stock strength
-	float	breakTorqueMultiplier		1			--Factor scales the failure strength (for torque) of joint connections; 1 gives stock strength
-	float	breakStrengthPerArea		1500			--Overrides above values if not equal to 1; joint strength is based on the area of the part and failure strength is equal to this value times connection area
-	float	breakTorquePerMOI		6000			--Same as above value, but for torques rather than forces and is based on the moment of inertia, not area
+	float	breakForceMultiplier			1			--Factor scales the failure strength (for forces) of joint connections; 1 gives stock strength
+	float	breakTorqueMultiplier			1			--Factor scales the failure strength (for torque) of joint connections; 1 gives stock strength
+	float	breakStrengthPerArea			1500			--Overrides above values if not equal to 1; joint strength is based on the area of the part and failure strength is equal to this value times connection area
+	float	breakTorquePerMOI			6000			--Same as above value, but for torques rather than forces and is based on the moment of inertia, not area
 
 
 ***********************
@@ -86,7 +93,7 @@ Joint Strength Values
 ***********************
 
 v4.1.x	-> better version in which joints are not built to keep parts in the place where they currently are, but where they should be according to the original positions
-		   this works against the part shift that could be observed in earlier versions and especially together with robotic parts
+		this works against the part shift that could be observed in earlier versions and especially together with robotic parts
 
 v4.0.x	-> the new version of KJR, a complete re-development where just ideas are kept from old versions
 
