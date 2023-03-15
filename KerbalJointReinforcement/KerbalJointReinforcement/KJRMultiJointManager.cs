@@ -8,6 +8,7 @@ namespace KerbalJointReinforcement
 	// all this class exists to do is to act as a box attached to 
 	// for a sequence of three parts (A, B, C), connected in series, this will exist on B and hold the strengthening joint from A to C
 	// if the joint from A to B or B to C is broken, this will destroy the joint A to C and then destroy itself
+
 	internal class KJRMultiJointManager
 	{
 		internal enum Reason
@@ -21,10 +22,10 @@ namespace KerbalJointReinforcement
 			internal bool direct;
 		}
 
-		Dictionary<Part, List<ConfigurableJointWithInfo>> multiJointDict;
 		internal List<Part> linkedSet;
 		List<Part> tempPartList;
 
+		Dictionary<Part, List<ConfigurableJointWithInfo>> multiJointDict;
 		Dictionary<ConfigurableJoint, Reason> jointReasonDict;
 
 		public KJRMultiJointManager()
@@ -34,6 +35,9 @@ namespace KerbalJointReinforcement
 			tempPartList = new List<Part>();
 			jointReasonDict = new Dictionary<ConfigurableJoint,Reason>();
 		}
+
+		// creates a list of all parts that form a path/connection
+		// from part1 to part2 and stores it in linkedSet
 
 		public bool TrySetValidLinkedSet(Part part1, Part part2)
 		{

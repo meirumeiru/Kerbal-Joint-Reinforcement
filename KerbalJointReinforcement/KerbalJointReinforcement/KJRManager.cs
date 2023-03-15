@@ -177,6 +177,7 @@ namespace KerbalJointReinforcement
 			if (!constructingVessels.Contains(v))
 				constructingVessels.Add(v);
 		}
+
 		private void OnEVAConstructionModePartDetached(Vessel v, Part p)
 		{
 			multiJointManager.RemovePartJoints(p);
@@ -351,8 +352,7 @@ namespace KerbalJointReinforcement
 			if(p.rb == null || p.attachJoint == null || !KJRJointUtils.IsJointAdjustmentAllowed(p))
 				return;
 
-			if((p.attachMethod == AttachNodeMethod.LOCKED_JOINT)
-			&& KJRJointUtils.debug)
+			if(KJRJointUtils.debug && (p.attachMethod == AttachNodeMethod.LOCKED_JOINT))
 			{
 				Debug.Log("KJR: Already processed part before: " + p.partInfo.name + " (" + p.flightID + ") -> " +
 							p.parent.partInfo.name + " (" + p.parent.flightID + ")");
@@ -404,7 +404,6 @@ namespace KerbalJointReinforcement
 			StringBuilder debugString = new StringBuilder();
 
 			bool addAdditionalJointToParent = KJRJointUtils.multiPartAttachNodeReinforcement;
-			//addAdditionalJointToParent &= !(p.Modules.Contains("LaunchClamp") || (p.parent.Modules.Contains("ModuleDecouple") || p.parent.Modules.Contains("ModuleAnchoredDecoupler")));
 			addAdditionalJointToParent &= !p.Modules.Contains<CModuleStrut>();
 
 			if(!KJRJointUtils.IsJointUnlockable(p)) // exclude those actions from joints that can be dynamically unlocked
@@ -846,7 +845,6 @@ namespace KerbalJointReinforcement
 				}
 			}
 
-
 			if(KJRJointUtils.debug)
 				Debug.Log(debugString.ToString());
 		}
@@ -885,43 +883,10 @@ namespace KerbalJointReinforcement
 
 			Dictionary<Part, List<Part>> childPartsToConnectByRoot = new Dictionary<Part,List<Part>>();
 
-			for(int i = 0; i < v.Parts.Count; ++i)
-			{
-				Part p = v.Parts[i];
+			List<Part> _endpoints = new List<Part>();
+			childPartsToConnectByRoot.Add(v.rootPart, _endpoints);
 
-				bool bEndPoint = (p.children.Count == 0);
-
-				if(!bEndPoint && !KJRJointUtils.IsJointAdjustmentAllowed(p) && p.parent && (p.parent.vessel == v))
-				{
-					p = p.parent;
-
-					bEndPoint = true;
-					for(int j = 0; j < p.children.Count; j++)
-					{
-						if(KJRJointUtils.IsJointAdjustmentAllowed(p.children[j]))
-						{ bEndPoint = false; break; }
-					}
-				}
-
-				if(bEndPoint && !p.Modules.Contains("LaunchClamp") && KJRJointUtils.MaximumPossiblePartMass(p) > KJRJointUtils.massForAdjustment)
-				{
-					if(p.rb == null && p.Rigidbody != null)
-						p = p.RigidBodyPart;
-
-					Part root = p;
-					while(root.parent && (root.parent.vessel == v) && KJRJointUtils.IsJointAdjustmentAllowed(root))
-						root = root.parent;
-
-					List<Part> childPartsToConnect;
-					if(!childPartsToConnectByRoot.TryGetValue(root, out childPartsToConnect))
-					{
-						childPartsToConnect = new List<Part>();
-						childPartsToConnectByRoot.Add(root, childPartsToConnect);
-					}
-
-					childPartsToConnect.Add(p);
-				}
-			}
+			KJRJointUtils.FindEndPoints(v.rootPart, ref _endpoints, ref childPartsToConnectByRoot);
 
 			foreach(Part root in childPartsToConnectByRoot.Keys)
 			{

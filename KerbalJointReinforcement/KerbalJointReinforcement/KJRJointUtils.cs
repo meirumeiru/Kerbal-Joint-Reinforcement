@@ -242,16 +242,17 @@ namespace KerbalJointReinforcement
 
 			for(int i = 0; i < p.Modules.Count; i++)
 			{
-				jointLockState = p.Modules[i] as IJointLockState;
+				PartModule module = p.Modules[i];
+
+				jointLockState = module as IJointLockState;
 				
 				if((jointLockState != null) && (jointLockState.IsJointUnlocked()))
 					return false;
 
-				PartModule module = p.Modules[i];
-
 				if((module is KerbalEVA)
 				|| (module is ModuleWheelBase)
-				|| (module is ModuleGrappleNode))
+				|| (module is ModuleGrappleNode)
+				|| (module is LaunchClamp))			// FEHLER, ist das wirklich "not allowed"? ... oder müsste man das Launch-Clamp-Reinforcement nochmal überarbeiten?
 					return false;
 			}
 
@@ -260,6 +261,9 @@ namespace KerbalJointReinforcement
 
 			return true;
 		}
+
+		////////////////////////////////////////
+		// find parts
 
 		public static List<Part> DecouplerPartStiffeningListParents(Part p)
 		{
@@ -358,8 +362,44 @@ namespace KerbalJointReinforcement
 			return tmpPartList;
 		}
 
+		public static bool FindEndPoints(Part p, ref List<Part> endpoints, ref Dictionary<Part, List<Part>> childPartsToConnectByRoot)
+		{
+			bool bResult = false;
+
+			foreach(Part c in p.children)
+			{
+				if(!KJRJointUtils.IsJointAdjustmentAllowed(c))
+				{
+					List<Part> _endpoints = new List<Part>();
+					childPartsToConnectByRoot.Add(c, _endpoints);
+
+					FindEndPoints(c, ref _endpoints, ref childPartsToConnectByRoot);
+				}
+				else
+				{
+					bResult |= FindEndPoints(c, ref endpoints, ref childPartsToConnectByRoot);
+				}
+			}
+
+			if(!bResult
+			&& KJRJointUtils.IsJointAdjustmentAllowed(p)
+			&& (KJRJointUtils.MaximumPossiblePartMass(p) > KJRJointUtils.massForAdjustment))
+			{
+				Part c = p;
+
+				if(c.rb == null && c.Rigidbody != null)
+					c = c.RigidBodyPart;
+
+				endpoints.Add(p);
+
+				bResult = true;
+			}
+
+			return bResult;
+		}
+
 		////////////////////////////////////////
-		// functions
+		// build joints
 
 		public static ConfigurableJoint BuildJoint(Part p, Part linkPart, JointDrive xDrive, JointDrive yDrive, JointDrive zDrive, JointDrive angularDrive, float linearStrength, float angularStrength)
 		{
