@@ -194,6 +194,13 @@ namespace KerbalJointReinforcement
 
 						t.color = Color.cyan;
 						break;
+
+					case KJRMultiJointManager.Reason.ReinforceInversions:
+						if(!WindowManager.Instance.ShowReinforcedInversions)
+							continue;
+
+						t.color = Color.blue;
+						break;
 					}
 
 					t.line = new LineDrawer();

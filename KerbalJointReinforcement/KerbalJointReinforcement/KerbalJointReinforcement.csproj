@@ -83,7 +83,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Gui\BasicTooltip.cs" />
     <Compile Include="Gui\CanvasGroupFader.cs" />
     <Compile Include="Gui\PanelDragger.cs" />
     <Compile Include="Gui\UIAssetsLoader.cs" />

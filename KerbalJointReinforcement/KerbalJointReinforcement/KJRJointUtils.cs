@@ -10,22 +10,25 @@ namespace KerbalJointReinforcement
 {
 	public static class KJRJointUtils
 	{
-		public static bool reinforceAttachNodes = false;
-		public static bool multiPartAttachNodeReinforcement = true;
+		public static bool reinforceAttachNodes = true;
+		public static bool multiPartAttachNodeReinforcement = false;
 		public static bool reinforceDecouplersFurther = false;
 		public static bool reinforceLaunchClampsFurther = false;
-		public static bool useVolumeNotArea = false;
-		public static float massForAdjustment = 0.001f;
-		public static float stiffeningExtensionMassRatioThreshold = 5;
+		public static bool reinforceInversions = true;
+
+		public static bool useVolumeNotArea = true;
+		public static float massForAdjustment = 0.01f;
+		public static float stiffeningExtensionMassRatioThreshold = 5f;
+
 		public static float decouplerAndClampJointStrength = float.PositiveInfinity;
 
-		public static float angularDriveSpring = 0;
-		public static float angularDriveDamper = 0;
+		public static float angularDriveSpring = 5e12f;
+		public static float angularDriveDamper = 25f;
 
-		public static float breakForceMultiplier = 1;
-		public static float breakTorqueMultiplier = 1;
-		public static float breakStrengthPerArea = 40;
-		public static float breakTorquePerMOI = 40000;
+		public static float breakForceMultiplier = 1f;
+		public static float breakTorqueMultiplier = 1f;
+		public static float breakStrengthPerArea = 1500f;
+		public static float breakTorquePerMOI = 6000f;
 
 		public static bool debug = false;
 
@@ -35,26 +38,27 @@ namespace KerbalJointReinforcement
 			config.load();
 
 			reinforceAttachNodes = config.GetValue<bool>("reinforceAttachNodes", true);
-			multiPartAttachNodeReinforcement = config.GetValue<bool>("multiPartAttachNodeReinforcement", true);
-			reinforceDecouplersFurther = config.GetValue<bool>("reinforceDecouplersFurther", true);
-			reinforceLaunchClampsFurther = config.GetValue<bool>("reinforceLaunchClampsFurther", true);
-			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
+			multiPartAttachNodeReinforcement = config.GetValue<bool>("multiPartAttachNodeReinforcement", false);
+			reinforceDecouplersFurther = config.GetValue<bool>("reinforceDecouplersFurther", false);
+			reinforceLaunchClampsFurther = config.GetValue<bool>("reinforceLaunchClampsFurther", false);
+			reinforceInversions = config.GetValue<bool>("reinforceInversions", true);
 
-			massForAdjustment = (float)config.GetValue<double>("massForAdjustment", 1);
-			stiffeningExtensionMassRatioThreshold = (float)config.GetValue<double>("stiffeningExtensionMassRatioThreshold", 5);
+			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
+			massForAdjustment = (float)config.GetValue<double>("massForAdjustment", 0.01f);
+			stiffeningExtensionMassRatioThreshold = (float)config.GetValue<double>("stiffeningExtensionMassRatioThreshold", 5f);
 
 			decouplerAndClampJointStrength = (float)config.GetValue<double>("decouplerAndClampJointStrength", float.PositiveInfinity);
 			if(decouplerAndClampJointStrength < 0)
 				decouplerAndClampJointStrength = float.PositiveInfinity;
 
-			angularDriveSpring = (float)config.GetValue<double>("angularDriveSpring");
-			angularDriveDamper = (float)config.GetValue<double>("angularDriveDamper");
+			angularDriveSpring = (float)config.GetValue<double>("angularDriveSpring", 5e12f);
+			angularDriveDamper = (float)config.GetValue<double>("angularDriveDamper", 25f);
 
-			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 1);
-			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 1);
+			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 1f);
+			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 1f);
 
-			breakStrengthPerArea = (float)config.GetValue<double>("breakStrengthPerArea", 40);
-			breakTorquePerMOI = (float)config.GetValue<double>("breakTorquePerMOI", 40000);
+			breakStrengthPerArea = (float)config.GetValue<double>("breakStrengthPerArea", 1500f);
+			breakTorquePerMOI = (float)config.GetValue<double>("breakTorquePerMOI", 6000f);
 
 			debug = config.GetValue<bool>("debug", false);
 
@@ -94,6 +98,7 @@ namespace KerbalJointReinforcement
 
 			if(debug)
 				Debug.Log("Maximum mass for part " + p.partInfo.title + " is " + maxMass);
+
 			return maxMass;
 		}
 
@@ -281,13 +286,9 @@ namespace KerbalJointReinforcement
 			}
 			else
 			{
-				float thisPartMaxMass = MaximumPossiblePartMass(p);
-
 				if(p.parent && IsJointAdjustmentAllowed(p))
 				{
-					float massRatio = MaximumPossiblePartMass(p.parent) / thisPartMaxMass;
-					//if(massRatio < 1)
-					//	massRatio = 1 / massRatio;
+					float massRatio = MaximumPossiblePartMass(p.parent) / MaximumPossiblePartMass(p);
 
 					if(massRatio > stiffeningExtensionMassRatioThreshold)
 					{
@@ -331,15 +332,15 @@ namespace KerbalJointReinforcement
 			}
 			else
 			{
-				float thisPartMaxMass = MaximumPossiblePartMass(p);
 				if(p.children != null)
+				{
+					float thisPartMaxMass = MaximumPossiblePartMass(p);
+
 					foreach(Part q in p.children)
 					{
 						if(q != null && q.parent == p && IsJointAdjustmentAllowed(q))
 						{
 							float massRatio = MaximumPossiblePartMass(q) / thisPartMaxMass;
-							//if(massRatio < 1)
-							//	massRatio = 1 / massRatio;
 
 							if(massRatio > stiffeningExtensionMassRatioThreshold)
 							{
@@ -349,6 +350,7 @@ namespace KerbalJointReinforcement
 							}
 						}
 					}
+				}
 			}
 
 			if(newAdditions.Count > 0)
@@ -362,35 +364,40 @@ namespace KerbalJointReinforcement
 			return tmpPartList;
 		}
 
-		public static bool FindEndPoints(Part p, ref List<Part> endpoints, ref Dictionary<Part, List<Part>> childPartsToConnectByRoot)
+		public static void FindRootsAndEndPoints(Part part, ref Dictionary<Part, List<Part>> childPartsToConnectByRoot)
+		{
+			if(part.rb)
+			{
+				List<Part> _endpoints = new List<Part>();
+				childPartsToConnectByRoot.Add(part, _endpoints);
+
+				FindEndPoints(part, ref _endpoints, ref childPartsToConnectByRoot);
+			}
+			else
+			{
+				foreach(Part child in part.children)
+					FindRootsAndEndPoints(child, ref childPartsToConnectByRoot);
+			}
+		}
+
+		public static bool FindEndPoints(Part part, ref List<Part> endpoints, ref Dictionary<Part, List<Part>> childPartsToConnectByRoot)
 		{
 			bool bResult = false;
 
-			foreach(Part c in p.children)
+			foreach(Part child in part.children)
 			{
-				if(!KJRJointUtils.IsJointAdjustmentAllowed(c))
-				{
-					List<Part> _endpoints = new List<Part>();
-					childPartsToConnectByRoot.Add(c, _endpoints);
-
-					FindEndPoints(c, ref _endpoints, ref childPartsToConnectByRoot);
-				}
+				if(!IsJointAdjustmentAllowed(child))
+					FindRootsAndEndPoints(child, ref childPartsToConnectByRoot);
 				else
-				{
-					bResult |= FindEndPoints(c, ref endpoints, ref childPartsToConnectByRoot);
-				}
+					bResult |= FindEndPoints(child, ref endpoints, ref childPartsToConnectByRoot);
 			}
 
 			if(!bResult
-			&& KJRJointUtils.IsJointAdjustmentAllowed(p)
-			&& (KJRJointUtils.MaximumPossiblePartMass(p) > KJRJointUtils.massForAdjustment))
+			&& part.rb
+			&& IsJointAdjustmentAllowed(part)
+			&& (MaximumPossiblePartMass(part) > massForAdjustment))
 			{
-				Part c = p;
-
-				if(c.rb == null && c.Rigidbody != null)
-					c = c.RigidBodyPart;
-
-				endpoints.Add(p);
+				endpoints.Add(part);
 
 				bResult = true;
 			}
@@ -398,24 +405,89 @@ namespace KerbalJointReinforcement
 			return bResult;
 		}
 
+		// search for a bad mass configuration
+		// (a much lighter part on the way up to the root)
+		public static bool IsInversion(Part part, out Part parent)
+		{
+			parent = part;
+
+			while(parent = IsJointAdjustmentAllowed(parent) ? parent.parent : null)
+			{
+				if((parent.rb != null) // only when physical significant
+				&& (part.mass > parent.mass * 2f))
+					return true;
+			}
+
+			return false;
+		}
+
+		// search for a part that could be used as anchor to solve the bad mass configuration
+		// (a part that is heavy enough on the way up to the root)
+		public static bool FindInversionResolution(Part part, Part parent, out Part inversionResolution)
+		{
+			inversionResolution = parent;
+
+			while(parent = IsJointAdjustmentAllowed(parent) ? parent.parent : null)
+			{
+				if((parent.rb != null) // only when physical significant
+				&& (parent.mass > inversionResolution.mass))
+				{
+					inversionResolution = parent;
+
+					if(inversionResolution.mass >= part.mass)
+						return true; // good enough
+				}
+			}
+
+			// we don't try to find a heavy child to connect to, because it feels wrong
+
+			return inversionResolution.mass * 2f >= part.mass; // the found part is acceptable, when it has at least half the mass of part
+		}
+
+		public static void FindInversionAndResolutions(Part part, ref Dictionary<Part, Part> inversionResolutions)
+		{
+			Part parent;
+
+			if((part.rb != null) // only when physical significant
+			&& (part.mass + part.GetResourceMass() >= KJRJointUtils.massForAdjustment)
+			&& IsInversion(part, out parent))
+			{
+				Part inversionResolution;
+
+				if(FindInversionResolution(part, parent, out inversionResolution))
+				{
+					inversionResolutions.Add(part, inversionResolution);
+				}
+			}
+
+			foreach(Part child in part.children)
+				FindInversionAndResolutions(child, ref inversionResolutions);
+		}
+
 		////////////////////////////////////////
 		// build joints
 
-		public static ConfigurableJoint BuildJoint(Part p, Part linkPart, JointDrive xDrive, JointDrive yDrive, JointDrive zDrive, JointDrive angularDrive, float linearStrength, float angularStrength)
+		public static ConfigurableJoint BuildJoint(Part part, Part linkPart, JointDrive xDrive, JointDrive yDrive, JointDrive zDrive, JointDrive angularDrive, float linearStrength, float angularStrength)
 		{
 			ConfigurableJoint newJoint;
 
-			if ((p.mass < linkPart.mass) && (p.rb != null))
-			{ Part t = p; p = linkPart; linkPart = t; }
+			if((part.mass < linkPart.mass) && (part.rb != null))
+			{ Part t = part; part = linkPart; linkPart = t; }
 
-			newJoint = p.gameObject.AddComponent<ConfigurableJoint>();
+// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
+if(part.rb == null)
+	Debug.LogError("KJR: BuildJoint -> p.rb == null!!!!!");
+if(linkPart.rb == null)
+	Debug.LogError("KJR: BuildJoint -> linkPart.rb == null!!!!!");
+
+			newJoint = part.gameObject.AddComponent<ConfigurableJoint>();
 			newJoint.connectedBody = linkPart.Rigidbody;
 
 			newJoint.anchor = Vector3.zero;
 
 			newJoint.autoConfigureConnectedAnchor = false;
-			newJoint.connectedAnchor = Quaternion.Inverse(linkPart.orgRot) * (p.orgPos - linkPart.orgPos);
-			newJoint.SetTargetRotationLocal(Quaternion.Inverse(p.transform.rotation) * linkPart.transform.rotation * (Quaternion.Inverse(linkPart.orgRot) * p.orgRot), Quaternion.identity);
+			newJoint.connectedAnchor = Quaternion.Inverse(linkPart.orgRot) * (part.orgPos - linkPart.orgPos);
+			newJoint.SetTargetRotationLocal((Quaternion.Inverse(part.transform.rotation) * linkPart.transform.rotation * (Quaternion.Inverse(linkPart.orgRot) * part.orgRot)).normalized, Quaternion.identity);
 
 			newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Free;
 			newJoint.angularYMotion = newJoint.angularZMotion = newJoint.angularXMotion = ConfigurableJointMotion.Free;
@@ -436,7 +508,7 @@ namespace KerbalJointReinforcement
 			return BuildJoint(p, linkPart,
 				linearDrive, linearDrive, linearDrive,
 				new JointDrive { maximumForce = PhysicsGlobals.JointForce, positionSpring = 60000f },
-				KJRJointUtils.decouplerAndClampJointStrength, KJRJointUtils.decouplerAndClampJointStrength);
+				decouplerAndClampJointStrength, decouplerAndClampJointStrength);
 		}
 
 		public static void ConnectLaunchClampToGround(Part clamp)
@@ -456,6 +528,82 @@ namespace KerbalJointReinforcement
 
 			//newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Locked;
 			//newJoint.angularXMotion = newJoint.angularYMotion = newJoint.angularZMotion = ConfigurableJointMotion.Locked;
+		}
+
+// FEHLER, das hier baut sowas auf wie der attach-Joint und macht das auch nach den Regeln von oben
+// ausser, dass die breakForce und so nicht zwischen den Teils ist, sondern das minimum aller Teils dazwischen
+
+		public static void MoveFromTo(Part part, Part linkPart,
+			ref float ang_positionSpring, ref float ang_positionDamper, ref float ang_maximumForce, ref float lin_positionSpring, ref float lin_positionDamper, ref float lin_maximumForce, ref float breakForce, ref float breakTorque)
+		{
+			if(part == null)
+			{
+				Debug.LogError("KJR: MoveFromTo -> not found!!!!!");
+				return;
+			}
+
+			ConfigurableJoint j = part.attachJoint.joints[0];
+
+			ang_positionSpring = Mathf.Min(ang_positionSpring, j.angularXDrive.positionSpring);
+			ang_positionDamper = Mathf.Min(ang_positionDamper, j.angularXDrive.positionDamper);
+			ang_maximumForce = Mathf.Min(ang_maximumForce, j.angularXDrive.maximumForce);
+			lin_positionSpring = Mathf.Min(lin_positionSpring, j.xDrive.positionSpring);
+			lin_positionDamper = Mathf.Min(lin_positionDamper, j.xDrive.positionDamper);
+			lin_maximumForce = Mathf.Min(lin_maximumForce, j.xDrive.maximumForce);
+			breakForce = Mathf.Min(breakForce, j.breakForce);
+			breakTorque = Mathf.Min(breakTorque, j.breakTorque);
+
+			if(part.parent.RigidBodyPart != linkPart)
+				MoveFromTo(part.parent.RigidBodyPart, linkPart,
+					ref ang_positionSpring, ref ang_positionDamper, ref ang_maximumForce, ref lin_positionSpring, ref lin_positionDamper, ref lin_maximumForce, ref breakForce, ref breakTorque);
+		}
+
+		public static ConfigurableJoint BuildJoint2(Part part, Part linkPart)
+		{
+			float ang_positionSpring = float.PositiveInfinity;
+			float ang_positionDamper = float.PositiveInfinity;
+			float ang_maximumForce = float.PositiveInfinity;
+			float lin_positionSpring = float.PositiveInfinity;
+			float lin_positionDamper = float.PositiveInfinity;
+			float lin_maximumForce = float.PositiveInfinity;
+			float breakForce = float.PositiveInfinity;
+			float breakTorque = float.PositiveInfinity;
+
+			MoveFromTo(part, linkPart,
+				ref ang_positionSpring, ref ang_positionDamper, ref ang_maximumForce, ref lin_positionSpring, ref lin_positionDamper, ref lin_maximumForce, ref breakForce, ref breakTorque);
+
+			ConfigurableJoint newJoint;
+
+			if((part.mass < linkPart.mass) && (part.rb != null))
+			{ Part t = part; part = linkPart; linkPart = t; }
+
+			newJoint = part.gameObject.AddComponent<ConfigurableJoint>();
+			newJoint.connectedBody = linkPart.Rigidbody;
+
+			newJoint.anchor = Vector3.zero;
+
+			newJoint.autoConfigureConnectedAnchor = false;
+			newJoint.connectedAnchor = Quaternion.Inverse(linkPart.orgRot) * (part.orgPos - linkPart.orgPos);
+			newJoint.SetTargetRotationLocal((Quaternion.Inverse(part.transform.rotation) * linkPart.transform.rotation * (Quaternion.Inverse(linkPart.orgRot) * part.orgRot)).normalized, Quaternion.identity);
+
+			newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Free;
+			newJoint.angularYMotion = newJoint.angularZMotion = newJoint.angularXMotion = ConfigurableJointMotion.Free;
+
+			JointDrive angDrive = new JointDrive { positionSpring = ang_positionSpring, positionDamper = ang_positionDamper, maximumForce = ang_maximumForce };
+			newJoint.angularXDrive = newJoint.angularYZDrive = newJoint.slerpDrive = angDrive;
+
+			JointDrive linDrive = new JointDrive { positionSpring = lin_positionSpring, positionDamper = lin_positionDamper, maximumForce = lin_maximumForce };
+			newJoint.xDrive = newJoint.yDrive = newJoint.zDrive = linDrive;
+
+			newJoint.linearLimit = newJoint.angularYLimit = newJoint.angularZLimit = newJoint.lowAngularXLimit = newJoint.highAngularXLimit
+				= new SoftJointLimit { limit = 0, bounciness = 0 };
+			newJoint.linearLimitSpring = newJoint.angularYZLimitSpring = newJoint.angularXLimitSpring
+				= new SoftJointLimitSpring { spring = 0, damper = 0 };
+
+			newJoint.breakForce = breakForce;
+			newJoint.breakTorque = breakTorque;
+
+			return newJoint;
 		}
 	}
 }

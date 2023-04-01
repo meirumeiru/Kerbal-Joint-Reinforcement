@@ -13,7 +13,7 @@ namespace KerbalJointReinforcement
 	{
 		internal enum Reason
 		{
-			None, ReinforceDecoupler, ReinforceLaunchClamp, AdditionalJointToParent, MultiPartJointTreeChildren, MultiPartJointTreeChildrenRoot
+			None, ReinforceDecoupler, ReinforceLaunchClamp, AdditionalJointToParent, MultiPartJointTreeChildren, MultiPartJointTreeChildrenRoot, ReinforceInversions
 		};
 
 		internal struct ConfigurableJointWithInfo
@@ -23,10 +23,11 @@ namespace KerbalJointReinforcement
 		}
 
 		internal List<Part> linkedSet;
-		List<Part> tempPartList;
 
-		Dictionary<Part, List<ConfigurableJointWithInfo>> multiJointDict;
-		Dictionary<ConfigurableJoint, Reason> jointReasonDict;
+		private List<Part> tempPartList;
+
+		private Dictionary<Part, List<ConfigurableJointWithInfo>> multiJointDict;
+		private Dictionary<ConfigurableJoint, Reason> jointReasonDict;
 
 		public KJRMultiJointManager()
 		{

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<KSPBundleDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" UrlName="kjr_ui_objects" Name="kjr_ui_objects" CreatedTime="-8585542316418493306" AutoLoad="false">
+<KSPBundleDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" UrlName="kjr_ui_objects" Name="kjr_ui_objects" CreatedTime="-8585212172663894317" AutoLoad="false">
   <Author />
   <Info />
   <Assets>
@@ -57,7 +57,6 @@
     <Asset Name="IRWindowTextBox" Path="Assets/Images/IRWindowTextBox.png" Type="Texture2D" Url="Images/IRWindowTextBox" AutoLoad="false" />
     <Asset Name="IRWindowVerticalScrollbar" Path="Assets/Images/IRWindowVerticalScrollbar.png" Type="Texture2D" Url="Images/IRWindowVerticalScrollbar" AutoLoad="false" />
     <Asset Name="PlaceHolder" Path="Assets/Images/PlaceHolder.png" Type="Texture2D" Url="Images/PlaceHolder" AutoLoad="false" />
-    <Asset Name="BasicTooltipPrefab" Path="Assets/Prefabs/BasicTooltipPrefab.prefab" Type="GameObject" Url="Prefabs/BasicTooltipPrefab" AutoLoad="false" />
     <Asset Name="GenericWindowPrefab" Path="Assets/Prefabs/GenericWindowPrefab.prefab" Type="GameObject" Url="Prefabs/GenericWindowPrefab" AutoLoad="false" />
     <Asset Name="KJRSettingsWindowPrefab" Path="Assets/Prefabs/KJRSettingsWindowPrefab.prefab" Type="GameObject" Url="Prefabs/KJRSettingsWindowPrefab" AutoLoad="false" />
     <Asset Name="OptionLinePrefab" Path="Assets/Prefabs/OptionLinePrefab.prefab" Type="GameObject" Url="Prefabs/OptionLinePrefab" AutoLoad="false" />

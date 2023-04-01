@@ -18,8 +18,6 @@ namespace KerbalJointReinforcement
 		internal static GameObject settingsWindowPrefab;
 		internal static GameObject optionLinePrefab;
 
-		internal static GameObject basicTooltipPrefab;
-
 		// images and icons
 		internal static List<Texture2D> iconAssets;
 		internal static List<UnityEngine.Sprite> spriteAssets;
@@ -61,23 +59,9 @@ namespace KerbalJointReinforcement
 					prefabCounter++;
 					Logger.Log("Successfully loaded OptionLinePrefab", Logger.Level.Debug);
 				}
-			/*
-				if(prefabs[i].name == "UISettingsWindowPrefab")
-				{
-					uiSettingsWindowPrefab = prefabs[i] as GameObject;
-					prefabCounter++;
-					Logger.Log("Successfully loaded UI settings window prefab", Logger.Level.Debug);
-				}
-			*/
-				if(prefabs[i].name == "BasicTooltipPrefab")
-				{
-					basicTooltipPrefab = prefabs[i] as GameObject;
-					prefabCounter++;
-					Logger.Log("Successfully loaded BasicTooltipPrefab", Logger.Level.Debug);
-				}
 			}
 
-			allPrefabsReady = (prefabCounter >= 3);
+			allPrefabsReady = (prefabCounter >= 2);
 
 			spriteAssets = new List<UnityEngine.Sprite>();
 			var sprites = KJRAssetBundle.LoadAllAssets<UnityEngine.Sprite>();

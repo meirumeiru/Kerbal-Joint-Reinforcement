@@ -93,6 +93,7 @@ namespace KerbalJointReinforcement
 
 		IEnumerator RunVesselJointUpdateFunctionDelayed(Vessel v)
 		{
+for(int i = 0; i < 100; i++) // FEHLER, temp, ich analysier was
 			yield return new WaitForFixedUpdate();
 
 			if (!EVAConstructionModeController.Instance.IsOpen || (EVAConstructionModeController.Instance.panelMode != EVAConstructionModeController.PanelMode.Construction))
@@ -124,6 +125,9 @@ namespace KerbalJointReinforcement
 		{
 			if((object)v == null || v.isEVA || v.GetComponent<KerbalEVA>())
 				return; 
+
+			if(!v.rootPart.started) // some mods seem to trigger this call too early -> we ignore those calls
+				return;
 
 			multiJointManager.RemoveAllVesselJoints(v);
 			updatedVessels.Remove(v);
@@ -332,8 +336,19 @@ namespace KerbalJointReinforcement
 			if(bReinforced && !updatedVessels.Contains(v))
 				updatedVessels.Add(v);
 
-			if(KJRJointUtils.reinforceAttachNodes && KJRJointUtils.multiPartAttachNodeReinforcement)
+			if(bReinforced && KJRJointUtils.reinforceAttachNodes && KJRJointUtils.multiPartAttachNodeReinforcement)
 				MultiPartJointTreeChildren(v);
+
+#if IncludeAnalyzer
+			if(WindowManager.Instance.ReinforceInversions)
+			{
+#endif
+			if(bReinforced && KJRJointUtils.reinforceInversions)
+				ReinforceInversions(v);
+
+#if IncludeAnalyzer
+			}
+#endif
 		}
 
 #if IncludeAnalyzer
@@ -401,7 +416,7 @@ namespace KerbalJointReinforcement
 			if(jointList == null)
 				return;
 
-			StringBuilder debugString = new StringBuilder();
+			StringBuilder debugString = KJRJointUtils.debug ? new StringBuilder() : null;
 
 			bool addAdditionalJointToParent = KJRJointUtils.multiPartAttachNodeReinforcement;
 			addAdditionalJointToParent &= !p.Modules.Contains<CModuleStrut>();
@@ -415,7 +430,6 @@ namespace KerbalJointReinforcement
 					if(j == null)
 						continue;
 
-					String jointType = j.GetType().Name;
 					Rigidbody connectedBody = j.connectedBody;
 
 					Part connectedPart = connectedBody.GetComponent<Part>() ?? p.parent;
@@ -465,7 +479,7 @@ namespace KerbalJointReinforcement
 
 						debugString.AppendLine("Std. Joint Parameters");
 						debugString.AppendLine("Connected Body: " + p.attachJoint.Joint.connectedBody);
-						debugString.AppendLine("Attach mode: " + p.attachMode + " (was " + jointType + ")");
+						debugString.AppendLine("Attach mode: " + p.attachMode + " (was " + j.GetType().Name + ")");
 						if(attach != null)
 							debugString.AppendLine("Attach node: " + attach.id + " - " + attach.nodeType + " " + attach.size);
 						if(p_attach != null)
@@ -508,8 +522,6 @@ namespace KerbalJointReinforcement
 						debugString.AppendLine("Position Damper: " + p.attachJoint.Joint.angularYZDrive.positionDamper);
 						debugString.AppendLine("Max Force: " + p.attachJoint.Joint.angularYZDrive.maximumForce);
 						debugString.AppendLine("");
-
-						//Debug.Log(debugString.ToString());
 					}
 
 
@@ -618,7 +630,7 @@ namespace KerbalJointReinforcement
 					}
 
 					// if using volume, raise al stiffness-affecting parameters to the 1.5 power
-					if (KJRJointUtils.useVolumeNotArea)
+					if(KJRJointUtils.useVolumeNotArea)
 					{
 						area = Mathf.Pow(area, 1.5f);
 						momentOfInertia = Mathf.Pow(momentOfInertia, 1.5f);
@@ -658,8 +670,8 @@ namespace KerbalJointReinforcement
 					j.targetRotation = Quaternion.identity;
 					j.targetPosition = Vector3.zero;
 
-					j.breakForce = breakForce;
-					j.breakTorque = breakTorque;
+					j.breakForce = breakForce;			// FEHLER, das hier entfernt das "unbreakable"... wollen wir das? und das SetBreakingForces nachher überschreibt den Wert hier gleich wieder -> klären -> sonst noch korrekten Wert rechne? * PhysicsGlobals.JointBreakForceFactor irgendwas
+					j.breakTorque = breakTorque;		// FEHLER, gleiche Frage wie eine Zeile oberhalb
 					p.attachJoint.SetBreakingForces(j.breakForce, j.breakTorque);
 
 					p.attachMethod = AttachNodeMethod.LOCKED_JOINT;
@@ -672,10 +684,9 @@ namespace KerbalJointReinforcement
 						debugString.AppendLine(p.partInfo.title + " Inertia Tensor: " + p.rb.inertiaTensor + " " + p.parent.partInfo.name + " Inertia Tensor: " + connectedBody.inertiaTensor);
 						debugString.AppendLine("");
 
-
 						debugString.AppendLine("Std. Joint Parameters");
 						debugString.AppendLine("Connected Body: " + p.attachJoint.Joint.connectedBody);
-						debugString.AppendLine("Attach mode: " + p.attachMode + " (was " + jointType + ")");
+						debugString.AppendLine("Attach mode: " + p.attachMode + " (was " + j.GetType().Name + ")");
 						if(attach != null)
 							debugString.AppendLine("Attach node: " + attach.id + " - " + attach.nodeType + " " + attach.size);
 						if(p_attach != null)
@@ -866,7 +877,7 @@ namespace KerbalJointReinforcement
 				debugString.AppendLine("The following joints added by " + part.partInfo.title + " to increase stiffness:");
 			}
 
-			if(part.parent.Rigidbody != null)
+			if(part.parent.Rigidbody != null) // FEHLER, wir tun alles, tragen es aber nur ein, wenn irgendwas einen Rigidbody hat? nicht mal zwingend das Teil selber?
 				MultiPartJointBuildJoint(part, part.parent, KJRMultiJointManager.Reason.ReinforceLaunchClamp);
 
 			if(KJRJointUtils.debug)
@@ -883,26 +894,28 @@ namespace KerbalJointReinforcement
 
 			Dictionary<Part, List<Part>> childPartsToConnectByRoot = new Dictionary<Part,List<Part>>();
 
-			List<Part> _endpoints = new List<Part>();
-			childPartsToConnectByRoot.Add(v.rootPart, _endpoints);
-
-			KJRJointUtils.FindEndPoints(v.rootPart, ref _endpoints, ref childPartsToConnectByRoot);
+			KJRJointUtils.FindRootsAndEndPoints(v.rootPart, ref childPartsToConnectByRoot);
 
 			foreach(Part root in childPartsToConnectByRoot.Keys)
 			{
+				if(!root.rb) // FEHLER, muss neu immer gelten
+					continue;
+
 				List<Part> childPartsToConnect = childPartsToConnectByRoot[root];
 
 				for(int i = 0; i < childPartsToConnect.Count; ++i)
 				{
 					Part p = childPartsToConnect[i];
 
-					if(!p.rb)
-						continue;
+// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
+if(p.rb == null)
+	Debug.LogError("KJR: MultiPartJointTreeChildren -> p.rb == null!!!!!");
 
 					Part linkPart = childPartsToConnect[i + 1 >= childPartsToConnect.Count ? 0 : i + 1];
 
-					if(!linkPart.Rigidbody || p.rb == linkPart.Rigidbody)
-						continue;
+// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
+if(linkPart.rb == null)
+	Debug.LogError("KJR: MultiPartJointTreeChildren -> linkPart.rb == null!!!!!");
 
 #if IncludeAnalyzer
 					if(WindowManager.Instance.BuildMultiPartJointTreeChildren)
@@ -916,8 +929,9 @@ namespace KerbalJointReinforcement
 
 					Part linkPart2 = childPartsToConnect[part2Index];
 
-					if(!linkPart2.Rigidbody || p.rb == linkPart2.Rigidbody)
-						continue;
+// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
+if(linkPart2.rb == null)
+	Debug.LogError("KJR: MultiPartJointTreeChildren -> linkPart2.rb == null!!!!!");
 
 #if IncludeAnalyzer
 					if(WindowManager.Instance.BuildMultiPartJointTreeChildren)
@@ -925,15 +939,40 @@ namespace KerbalJointReinforcement
 						MultiPartJointBuildJoint(p, linkPart2, KJRMultiJointManager.Reason.MultiPartJointTreeChildren);
 
 
-					if(!root.Rigidbody || p.rb == root.Rigidbody)
-						continue;
-
 #if IncludeAnalyzer
 					if(WindowManager.Instance.BuildMultiPartJointTreeChildrenRoot)
 #endif
 						MultiPartJointBuildJoint(p, root, KJRMultiJointManager.Reason.MultiPartJointTreeChildrenRoot);
 				}
 			}
+		}
+
+		private void ReinforceInversionsBuildJoint(Part part, Part linkPart)
+		{
+			if(multiJointManager.CheckDirectJointBetweenParts(part, linkPart)
+			|| !multiJointManager.TrySetValidLinkedSet(part, linkPart))
+				return;
+
+			ConfigurableJoint joint = KJRJointUtils.BuildJoint2(part, linkPart);
+
+			multiJointManager.RegisterMultiJoint(part, joint, true, KJRMultiJointManager.Reason.ReinforceInversions);
+			multiJointManager.RegisterMultiJoint(linkPart, joint, true, KJRMultiJointManager.Reason.ReinforceInversions);
+
+			foreach(Part p in multiJointManager.linkedSet)
+				multiJointManager.RegisterMultiJoint(p, joint, false, KJRMultiJointManager.Reason.ReinforceInversions);
+		}
+
+		public void ReinforceInversions(Vessel v)
+		{
+			if(v.Parts.Count <= 1)
+				return;
+
+			Dictionary<Part, Part> inversionResolutions = new Dictionary<Part,Part>();
+
+			KJRJointUtils.FindInversionAndResolutions(v.rootPart, ref inversionResolutions);
+
+			foreach(KeyValuePair<Part, Part> entry in inversionResolutions)
+				ReinforceInversionsBuildJoint(entry.Key, entry.Value);
 		}
 	}
 }

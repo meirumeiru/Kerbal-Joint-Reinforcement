@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <config>
     <bool name="reinforceAttachNodes">1</bool>
-    <bool name="multiPartAttachNodeReinforcement">1</bool>
-    <bool name="reinforceDecouplersFurther">1</bool>
-    <bool name="reinforceLaunchClampsFurther">1</bool>
+    <bool name="multiPartAttachNodeReinforcement">0</bool>
+    <bool name="reinforceDecouplersFurther">0</bool>
+    <bool name="reinforceLaunchClampsFurther">0</bool>
+    <bool name="reinforceInversions">1</bool>
     <bool name="useVolumeNotArea">1</bool>
     <bool name="debug">0</bool>
     <double name="massForAdjustment">0.01</double>

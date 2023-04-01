@@ -61,12 +61,19 @@ namespace KerbalJointReinforcement
 
 		public bool ShowKSPJoints = false;
 		public bool ReinforceExistingJoints = true;
-		public bool BuildAdditionalJointToParent = true;
+
+		public bool BuildAdditionalJointToParent = false;
 		public bool ShowAdditionalJointToParent = false;
-		public bool BuildMultiPartJointTreeChildren = true;
+
+		public bool BuildMultiPartJointTreeChildren = false;
 		public bool ShowMultiPartJointTreeChildren = false;
-		public bool BuildMultiPartJointTreeChildrenRoot = true;
+
+		public bool BuildMultiPartJointTreeChildrenRoot = false;
 		public bool ShowMultiPartJointTreeChildrenRoot = false;
+
+		public bool ReinforceInversions = true;
+		public bool ShowReinforcedInversions = false;
+
 		public bool ShowInstability = false;
 
 		internal bool GUIEnabled = false;
@@ -156,40 +163,21 @@ namespace KerbalJointReinforcement
 			_settingsWindow.GetChild("WindowTitle").AddComponent<PanelDragger>();
 			_settingsWindowFader = _settingsWindow.AddComponent<CanvasGroupFader>();
 
-			// start invisible to be toggled later
-	//		if(!startSolid)
-	//			_settingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
-
 			_settingsWindow.GetComponent<CanvasGroup>().alpha = 0f;
 
 			if(_settingsWindowPosition == Vector3.zero)
 				_settingsWindowPosition = _settingsWindow.transform.position; // get the default position from the prefab
 			else
 				_settingsWindow.transform.position = ClampWindowPosition(_settingsWindowPosition);
-		/*
-			var settingsButton = _settingsWindow.GetChild("WindowTitle").GetChild("LeftWindowButton");
-			if(settingsButton != null)
-			{
-				settingsButton.GetComponent<Button>().onClick.AddListener(ToggleSettingsWindow);
-				var t = settingsButton.AddComponent<BasicTooltip>();
-				t.tooltipText = "Show/hide UI settings";
-			}
-		*/
+
 			var closeButton = _settingsWindow.GetChild("WindowTitle").GetChild("RightWindowButton");
 			if(closeButton != null)
-			{
 				closeButton.GetComponent<Button>().onClick.AddListener(OnHideCallback);
-				var t = closeButton.AddComponent<BasicTooltip>();
-				t.tooltipText = "Close window";
-			}
 
 			var content = _settingsWindow.GetChild("WindowContent");
 
 			var OptShowKSPJoints = AddNewOption(content, "ShowKSPJoints");
 			OptShowKSPJoints.isOn = ShowKSPJoints;
-
-	//		var Opt1ToggleTooltip = Opt1Toggle.gameObject.AddComponent<BasicTooltip>();
-	//		Opt1ToggleTooltip.tooltipText = "Option1";
 
 			var OptReinforceExistingJoints = AddNewOption(content, "Reinforce Existing Joints");
 			OptReinforceExistingJoints.isOn = ReinforceExistingJoints;
@@ -212,6 +200,12 @@ namespace KerbalJointReinforcement
 			var OptShowMultiPartJointTreeChildrenRoot = AddNewOption(content, "Show MultiPartJointTreeChildrenRoot");
 			OptShowMultiPartJointTreeChildrenRoot.isOn = ShowMultiPartJointTreeChildrenRoot;
 
+			var OptReinforceInversions = AddNewOption(content, "Reinforce Inversions");
+			OptReinforceInversions.isOn = ReinforceInversions;
+
+			var OptShowReinforcedInversions = AddNewOption(content, "Show Reinforced Inversions");
+			OptShowReinforcedInversions.isOn = ShowReinforcedInversions;
+
 			var OptAutoStrutDisplay = AddNewOption(content, "Show AutoStruts");
 			OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
 
@@ -231,6 +225,8 @@ namespace KerbalJointReinforcement
 					OptShowMultiPartJointTreeChildren.isOn = ShowMultiPartJointTreeChildren;
 					OptBuildMultiPartJointTreeChildrenRoot.isOn = BuildMultiPartJointTreeChildrenRoot;
 					OptShowMultiPartJointTreeChildrenRoot.isOn = ShowMultiPartJointTreeChildrenRoot;
+					OptReinforceInversions.isOn = ReinforceInversions;
+					OptShowReinforcedInversions.isOn = ShowReinforcedInversions;
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
 					OptShowInstability.isOn = ShowInstability;
 				});
@@ -246,23 +242,29 @@ namespace KerbalJointReinforcement
 						bCycle = true;
 					OptReinforceExistingJoints.isOn = ReinforceExistingJoints = true;
 
-					if(!BuildAdditionalJointToParent)
+					if(BuildAdditionalJointToParent)
 						bCycle = true;
-					OptBuildAdditionalJointToParent.isOn = BuildAdditionalJointToParent = true;
+					OptBuildAdditionalJointToParent.isOn = BuildAdditionalJointToParent = false;
 
 					OptShowAdditionalJointToParent.isOn = ShowAdditionalJointToParent = false;
 	
-					if(!BuildMultiPartJointTreeChildren)
+					if(BuildMultiPartJointTreeChildren)
 						bCycle = true;
-					OptBuildMultiPartJointTreeChildren.isOn = BuildMultiPartJointTreeChildren = true;
+					OptBuildMultiPartJointTreeChildren.isOn = BuildMultiPartJointTreeChildren = false;
 
 					OptShowMultiPartJointTreeChildren.isOn = ShowMultiPartJointTreeChildren = false;
 
-					if(!BuildMultiPartJointTreeChildrenRoot)
+					if(BuildMultiPartJointTreeChildrenRoot)
 						bCycle = true;
-					OptBuildMultiPartJointTreeChildrenRoot.isOn = BuildMultiPartJointTreeChildrenRoot = true;
+					OptBuildMultiPartJointTreeChildrenRoot.isOn = BuildMultiPartJointTreeChildrenRoot = false;
 
 					OptShowMultiPartJointTreeChildrenRoot.isOn = ShowMultiPartJointTreeChildrenRoot = false;
+
+					if(!ReinforceInversions)
+						bCycle = true;
+					OptReinforceInversions.isOn = ReinforceInversions = true;
+
+					OptShowReinforcedInversions.isOn = ShowReinforcedInversions = false;
 
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay = false;
 
@@ -317,6 +319,14 @@ namespace KerbalJointReinforcement
 					}
 
 					ShowMultiPartJointTreeChildrenRoot = OptShowMultiPartJointTreeChildrenRoot.isOn;
+
+					if(ReinforceInversions != OptReinforceInversions.isOn)
+					{
+						bCycle = true;
+						ReinforceInversions = OptReinforceInversions.isOn;
+					}
+
+					ShowReinforcedInversions = OptShowReinforcedInversions.isOn;
 
 					PhysicsGlobals.AutoStrutDisplay = OptAutoStrutDisplay.isOn;
 
@@ -394,14 +404,7 @@ namespace KerbalJointReinforcement
 			
 			if(EventSystem.current.currentSelectedGameObject != null && 
 			   (EventSystem.current.currentSelectedGameObject.GetComponent<InputField>() != null
-				|| EventSystem.current.currentSelectedGameObject.GetType() == typeof(InputField))				/*
-				 (EventSystem.current.currentSelectedGameObject.name == "GroupNameInputField"
-				 || EventSystem.current.currentSelectedGameObject.name == "GroupMoveLeftKey"
-				 || EventSystem.current.currentSelectedGameObject.name == "GroupMoveRightKey"
-				 || EventSystem.current.currentSelectedGameObject.name == "ServoNameInputField"
-				 || EventSystem.current.currentSelectedGameObject.name == "ServoPositionInputField"
-				 || EventSystem.current.currentSelectedGameObject.name == "NewGroupNameInputField"
-				 || EventSystem.current.currentSelectedGameObject.name == "ServoGroupSpeedMultiplier")*/)
+				|| EventSystem.current.currentSelectedGameObject.GetType() == typeof(InputField)))
 			{
 				if(!isKeyboardLocked)
 					KeyboardLock(true); 
@@ -584,6 +587,8 @@ namespace KerbalJointReinforcement
 			config.SetValue("dbg_ShowMultiPartJointTreeChildren", ShowMultiPartJointTreeChildren);
 			config.SetValue("dbg_BuildMultiPartJointTreeChildrenRoot", BuildMultiPartJointTreeChildrenRoot);
 			config.SetValue("dbg_ShowMultiPartJointTreeChildrenRoot", ShowMultiPartJointTreeChildrenRoot);
+			config.SetValue("dbg_ReinforceInversions", ReinforceInversions);
+			config.SetValue("dbg_ShowReinforcedInversions", ShowReinforcedInversions);
 
 			config.save();
 		}
@@ -597,14 +602,16 @@ namespace KerbalJointReinforcement
 
 			_UIAlphaValue = (float)config.GetValue<double>("dbg_UIAlphaValue", 0.8);
 			_UIScaleValue = (float)config.GetValue<double>("dbg_UIScaleValue", 1.0);
-			ShowKSPJoints = config.GetValue<bool>("dbg_ShowKSPJoints", true);
+			ShowKSPJoints = config.GetValue<bool>("dbg_ShowKSPJoints", false);
 			ReinforceExistingJoints = config.GetValue<bool>("dbg_ReinforceExistingJoints", true);
-			BuildAdditionalJointToParent = config.GetValue<bool>("dbg_BuildAdditionalJointToParent", true);
-			ShowAdditionalJointToParent = config.GetValue<bool>("dbg_ShowAdditionalJointToParent", true);
-			BuildMultiPartJointTreeChildren = config.GetValue<bool>("dbg_BuildMultiPartJointTreeChildren", true);
-			ShowMultiPartJointTreeChildren = config.GetValue<bool>("dbg_ShowMultiPartJointTreeChildren", true);
-			BuildMultiPartJointTreeChildrenRoot = config.GetValue<bool>("dbg_BuildMultiPartJointTreeChildrenRoot", true);
-			ShowMultiPartJointTreeChildrenRoot = config.GetValue<bool>("dbg_ShowMultiPartJointTreeChildrenRoot", true);
+			BuildAdditionalJointToParent = config.GetValue<bool>("dbg_BuildAdditionalJointToParent", false);
+			ShowAdditionalJointToParent = config.GetValue<bool>("dbg_ShowAdditionalJointToParent", false);
+			BuildMultiPartJointTreeChildren = config.GetValue<bool>("dbg_BuildMultiPartJointTreeChildren", false);
+			ShowMultiPartJointTreeChildren = config.GetValue<bool>("dbg_ShowMultiPartJointTreeChildren", false);
+			BuildMultiPartJointTreeChildrenRoot = config.GetValue<bool>("dbg_BuildMultiPartJointTreeChildrenRoot", false);
+			ShowMultiPartJointTreeChildrenRoot = config.GetValue<bool>("dbg_ShowMultiPartJointTreeChildrenRoot", false);
+			ReinforceInversions = config.GetValue<bool>("dbg_ReinforceInversions", true);
+			ShowReinforcedInversions = config.GetValue<bool>("dbg_ShowReinforcedInversions", false);
 		}
 	}
 
