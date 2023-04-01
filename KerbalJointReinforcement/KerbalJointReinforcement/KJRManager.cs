@@ -93,7 +93,6 @@ namespace KerbalJointReinforcement
 
 		IEnumerator RunVesselJointUpdateFunctionDelayed(Vessel v)
 		{
-for(int i = 0; i < 100; i++) // FEHLER, temp, ich analysier was
 			yield return new WaitForFixedUpdate();
 
 			if (!EVAConstructionModeController.Instance.IsOpen || (EVAConstructionModeController.Instance.panelMode != EVAConstructionModeController.PanelMode.Construction))
