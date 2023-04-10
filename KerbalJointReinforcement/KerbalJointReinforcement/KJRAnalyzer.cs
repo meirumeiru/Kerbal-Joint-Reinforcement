@@ -174,32 +174,18 @@ namespace KerbalJointReinforcement
 						t.color = Color.green;
 						break;
 
-					case KJRMultiJointManager.Reason.AdditionalJointToParent:
-						if(!WindowManager.Instance.ShowAdditionalJointToParent)
+					case KJRMultiJointManager.Reason.ReinforceInversions:
+						if(!WindowManager.Instance.ShowReinforcedInversions)
 							continue;
 
 						t.color = Color.magenta;
 						break;
 
-					case KJRMultiJointManager.Reason.MultiPartJointTreeChildren:
-						if(!WindowManager.Instance.ShowMultiPartJointTreeChildren)
+					case KJRMultiJointManager.Reason.ExtraStabilityJoint:
+						if(!WindowManager.Instance.ShowExtraStabilityJoints)
 							continue;
 
 						t.color = Color.yellow;
-						break;
-
-					case KJRMultiJointManager.Reason.MultiPartJointTreeChildrenRoot:
-						if(!WindowManager.Instance.ShowMultiPartJointTreeChildrenRoot)
-							continue;
-
-						t.color = Color.cyan;
-						break;
-
-					case KJRMultiJointManager.Reason.ReinforceInversions:
-						if(!WindowManager.Instance.ShowReinforcedInversions)
-							continue;
-
-						t.color = Color.blue;
 						break;
 					}
 

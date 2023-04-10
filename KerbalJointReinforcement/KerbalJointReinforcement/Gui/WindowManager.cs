@@ -62,17 +62,11 @@ namespace KerbalJointReinforcement
 		public bool ShowKSPJoints = false;
 		public bool ReinforceExistingJoints = true;
 
-		public bool BuildAdditionalJointToParent = false;
-		public bool ShowAdditionalJointToParent = false;
-
-		public bool BuildMultiPartJointTreeChildren = false;
-		public bool ShowMultiPartJointTreeChildren = false;
-
-		public bool BuildMultiPartJointTreeChildrenRoot = false;
-		public bool ShowMultiPartJointTreeChildrenRoot = false;
-
 		public bool ReinforceInversions = true;
 		public bool ShowReinforcedInversions = false;
+
+		public bool BuildExtraStabilityJoints = false;
+		public bool ShowExtraStabilityJoints = false;
 
 		public bool ShowInstability = false;
 
@@ -89,7 +83,7 @@ namespace KerbalJointReinforcement
 		{
 			LoadConfigXml();
 
-			KJRAnalyzer.OnLoad(ShowKSPJoints | ShowAdditionalJointToParent | ShowMultiPartJointTreeChildren | ShowMultiPartJointTreeChildrenRoot);
+			KJRAnalyzer.OnLoad(ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints);
 
 			Logger.Log("[NewGUI] awake, Mode: " + AddonName);
 
@@ -182,29 +176,17 @@ namespace KerbalJointReinforcement
 			var OptReinforceExistingJoints = AddNewOption(content, "Reinforce Existing Joints");
 			OptReinforceExistingJoints.isOn = ReinforceExistingJoints;
 
-			var OptBuildAdditionalJointToParent = AddNewOption(content, "Build Additional Joints To Parent");
-			OptBuildAdditionalJointToParent.isOn = BuildAdditionalJointToParent;
-
-			var OptShowAdditionalJointToParent = AddNewOption(content, "Show Additional Joints To Parent");
-			OptShowAdditionalJointToParent.isOn = ShowAdditionalJointToParent;
-
-			var OptBuildMultiPartJointTreeChildren = AddNewOption(content, "Build MultiPartJointTreeChildren");
-			OptBuildMultiPartJointTreeChildren.isOn = BuildMultiPartJointTreeChildren;
-
-			var OptShowMultiPartJointTreeChildren = AddNewOption(content, "Show MultiPartJointTreeChildren");
-			OptShowMultiPartJointTreeChildren.isOn = ShowMultiPartJointTreeChildren;
-
-			var OptBuildMultiPartJointTreeChildrenRoot = AddNewOption(content, "Build MultiPartJointTreeChildrenRoot");
-			OptBuildMultiPartJointTreeChildrenRoot.isOn = BuildMultiPartJointTreeChildrenRoot;
-
-			var OptShowMultiPartJointTreeChildrenRoot = AddNewOption(content, "Show MultiPartJointTreeChildrenRoot");
-			OptShowMultiPartJointTreeChildrenRoot.isOn = ShowMultiPartJointTreeChildrenRoot;
-
 			var OptReinforceInversions = AddNewOption(content, "Reinforce Inversions");
 			OptReinforceInversions.isOn = ReinforceInversions;
 
 			var OptShowReinforcedInversions = AddNewOption(content, "Show Reinforced Inversions");
 			OptShowReinforcedInversions.isOn = ShowReinforcedInversions;
+
+			var OptBuildExtraStabilityJoints = AddNewOption(content, "Build Extra Stability Joints");
+			OptBuildExtraStabilityJoints.isOn = BuildExtraStabilityJoints;
+
+			var OptShowExtraStabilityJoints = AddNewOption(content, "Show Extra Stability Joints");
+			OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints;
 
 			var OptAutoStrutDisplay = AddNewOption(content, "Show AutoStruts");
 			OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
@@ -219,14 +201,10 @@ namespace KerbalJointReinforcement
 				{
 					OptShowKSPJoints.isOn = ShowKSPJoints;
 					OptReinforceExistingJoints.isOn = ReinforceExistingJoints;
-					OptBuildAdditionalJointToParent.isOn = BuildAdditionalJointToParent;
-					OptShowAdditionalJointToParent.isOn = ShowAdditionalJointToParent;
-					OptBuildMultiPartJointTreeChildren.isOn = BuildMultiPartJointTreeChildren;
-					OptShowMultiPartJointTreeChildren.isOn = ShowMultiPartJointTreeChildren;
-					OptBuildMultiPartJointTreeChildrenRoot.isOn = BuildMultiPartJointTreeChildrenRoot;
-					OptShowMultiPartJointTreeChildrenRoot.isOn = ShowMultiPartJointTreeChildrenRoot;
 					OptReinforceInversions.isOn = ReinforceInversions;
 					OptShowReinforcedInversions.isOn = ShowReinforcedInversions;
+					OptBuildExtraStabilityJoints.isOn = BuildExtraStabilityJoints;
+					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints;
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
 					OptShowInstability.isOn = ShowInstability;
 				});
@@ -242,37 +220,25 @@ namespace KerbalJointReinforcement
 						bCycle = true;
 					OptReinforceExistingJoints.isOn = ReinforceExistingJoints = true;
 
-					if(BuildAdditionalJointToParent)
-						bCycle = true;
-					OptBuildAdditionalJointToParent.isOn = BuildAdditionalJointToParent = false;
-
-					OptShowAdditionalJointToParent.isOn = ShowAdditionalJointToParent = false;
-	
-					if(BuildMultiPartJointTreeChildren)
-						bCycle = true;
-					OptBuildMultiPartJointTreeChildren.isOn = BuildMultiPartJointTreeChildren = false;
-
-					OptShowMultiPartJointTreeChildren.isOn = ShowMultiPartJointTreeChildren = false;
-
-					if(BuildMultiPartJointTreeChildrenRoot)
-						bCycle = true;
-					OptBuildMultiPartJointTreeChildrenRoot.isOn = BuildMultiPartJointTreeChildrenRoot = false;
-
-					OptShowMultiPartJointTreeChildrenRoot.isOn = ShowMultiPartJointTreeChildrenRoot = false;
-
 					if(!ReinforceInversions)
 						bCycle = true;
 					OptReinforceInversions.isOn = ReinforceInversions = true;
 
 					OptShowReinforcedInversions.isOn = ShowReinforcedInversions = false;
 
+					if(BuildExtraStabilityJoints)
+						bCycle = true;
+					OptBuildExtraStabilityJoints.isOn = BuildExtraStabilityJoints = false;
+
+					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints = false;
+	
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay = false;
 
 					if(ShowInstability)
 						bCycle2 = true;
 					OptShowInstability.isOn = ShowInstability = false;
 
-					KJRAnalyzer.Show = ShowKSPJoints | ShowAdditionalJointToParent | ShowMultiPartJointTreeChildren | ShowMultiPartJointTreeChildrenRoot;
+					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
 
 					if(HighLogic.LoadedSceneIsFlight)
 					{
@@ -296,30 +262,6 @@ namespace KerbalJointReinforcement
 						ReinforceExistingJoints = OptReinforceExistingJoints.isOn;
 					}
 
-					if(BuildAdditionalJointToParent != OptBuildAdditionalJointToParent.isOn)
-					{
-						bCycle = true;
-						BuildAdditionalJointToParent = OptBuildAdditionalJointToParent.isOn;
-					}
-
-					ShowAdditionalJointToParent = OptShowAdditionalJointToParent.isOn;
-
-					if(BuildMultiPartJointTreeChildren != OptBuildMultiPartJointTreeChildren.isOn)
-					{
-						bCycle = true;
-						BuildMultiPartJointTreeChildren = OptBuildMultiPartJointTreeChildren.isOn;
-					}
-	
-					ShowMultiPartJointTreeChildren = OptShowMultiPartJointTreeChildren.isOn;
-
-					if(BuildMultiPartJointTreeChildrenRoot != OptBuildMultiPartJointTreeChildrenRoot.isOn)
-					{
-						bCycle = true;
-						BuildMultiPartJointTreeChildrenRoot = OptBuildMultiPartJointTreeChildrenRoot.isOn;
-					}
-
-					ShowMultiPartJointTreeChildrenRoot = OptShowMultiPartJointTreeChildrenRoot.isOn;
-
 					if(ReinforceInversions != OptReinforceInversions.isOn)
 					{
 						bCycle = true;
@@ -327,6 +269,14 @@ namespace KerbalJointReinforcement
 					}
 
 					ShowReinforcedInversions = OptShowReinforcedInversions.isOn;
+
+					if(BuildExtraStabilityJoints != OptBuildExtraStabilityJoints.isOn)
+					{
+						bCycle = true;
+						BuildExtraStabilityJoints = OptBuildExtraStabilityJoints.isOn;
+					}
+
+					ShowExtraStabilityJoints = OptShowExtraStabilityJoints.isOn;
 
 					PhysicsGlobals.AutoStrutDisplay = OptAutoStrutDisplay.isOn;
 
@@ -336,7 +286,7 @@ namespace KerbalJointReinforcement
 						ShowInstability = OptShowInstability.isOn;
 					}
 
-					KJRAnalyzer.Show = ShowKSPJoints | ShowAdditionalJointToParent | ShowMultiPartJointTreeChildren | ShowMultiPartJointTreeChildrenRoot;
+					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
 
 					if(HighLogic.LoadedSceneIsFlight)
 					{
@@ -581,14 +531,10 @@ namespace KerbalJointReinforcement
 			config.SetValue("dbg_UIScaleValue", (double)_UIScaleValue);
 			config.SetValue("dbg_ShowKSPJoints", ShowKSPJoints);
 			config.SetValue("dbg_ReinforceExistingJoints", ReinforceExistingJoints);
-			config.SetValue("dbg_BuildAdditionalJointToParent", BuildAdditionalJointToParent);
-			config.SetValue("dbg_ShowAdditionalJointToParent", ShowAdditionalJointToParent);
-			config.SetValue("dbg_BuildMultiPartJointTreeChildren", BuildMultiPartJointTreeChildren);
-			config.SetValue("dbg_ShowMultiPartJointTreeChildren", ShowMultiPartJointTreeChildren);
-			config.SetValue("dbg_BuildMultiPartJointTreeChildrenRoot", BuildMultiPartJointTreeChildrenRoot);
-			config.SetValue("dbg_ShowMultiPartJointTreeChildrenRoot", ShowMultiPartJointTreeChildrenRoot);
 			config.SetValue("dbg_ReinforceInversions", ReinforceInversions);
 			config.SetValue("dbg_ShowReinforcedInversions", ShowReinforcedInversions);
+			config.SetValue("dbg_BuildExtraStabilityJoints", BuildExtraStabilityJoints);
+			config.SetValue("dbg_ShowExtraStabilityJoints", ShowExtraStabilityJoints);
 
 			config.save();
 		}
@@ -604,14 +550,10 @@ namespace KerbalJointReinforcement
 			_UIScaleValue = (float)config.GetValue<double>("dbg_UIScaleValue", 1.0);
 			ShowKSPJoints = config.GetValue<bool>("dbg_ShowKSPJoints", false);
 			ReinforceExistingJoints = config.GetValue<bool>("dbg_ReinforceExistingJoints", true);
-			BuildAdditionalJointToParent = config.GetValue<bool>("dbg_BuildAdditionalJointToParent", false);
-			ShowAdditionalJointToParent = config.GetValue<bool>("dbg_ShowAdditionalJointToParent", false);
-			BuildMultiPartJointTreeChildren = config.GetValue<bool>("dbg_BuildMultiPartJointTreeChildren", false);
-			ShowMultiPartJointTreeChildren = config.GetValue<bool>("dbg_ShowMultiPartJointTreeChildren", false);
-			BuildMultiPartJointTreeChildrenRoot = config.GetValue<bool>("dbg_BuildMultiPartJointTreeChildrenRoot", false);
-			ShowMultiPartJointTreeChildrenRoot = config.GetValue<bool>("dbg_ShowMultiPartJointTreeChildrenRoot", false);
 			ReinforceInversions = config.GetValue<bool>("dbg_ReinforceInversions", true);
 			ShowReinforcedInversions = config.GetValue<bool>("dbg_ShowReinforcedInversions", false);
+			BuildExtraStabilityJoints = config.GetValue<bool>("dbg_BuildExtraStabilityJoints", false);
+			ShowExtraStabilityJoints = config.GetValue<bool>("dbg_ShowExtraStabilityJoints", false);
 		}
 	}
 

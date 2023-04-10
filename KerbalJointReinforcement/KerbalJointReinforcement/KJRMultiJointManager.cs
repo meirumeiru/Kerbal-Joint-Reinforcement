@@ -13,7 +13,7 @@ namespace KerbalJointReinforcement
 	{
 		internal enum Reason
 		{
-			None, ReinforceDecoupler, ReinforceLaunchClamp, AdditionalJointToParent, MultiPartJointTreeChildren, MultiPartJointTreeChildrenRoot, ReinforceInversions
+			None, ReinforceInversions, ExtraStabilityJoint, ReinforceLaunchClamp
 		};
 
 		internal struct ConfigurableJointWithInfo
@@ -51,11 +51,15 @@ namespace KerbalJointReinforcement
 				part1 = KJRJointUtils.IsJointAdjustmentAllowed(part1) ? part1.parent : null;
 			}
 
+		//	KJRJointUtils.BuildLinkSet(part1, ref linkedSet); -> FEHLER, das hier nutzen
+
 			while(part2 != null)
 			{
 				tempPartList.Add(part2);
 				part2 = KJRJointUtils.IsJointAdjustmentAllowed(part2) ? part2.parent : null;
 			}
+
+		//	KJRJointUtils.BuildLinkSet(part2, ref tempPartList); -> FEHLER, das hier nutzen
 
 			int i = linkedSet.Count - 1;
 			int j = tempPartList.Count - 1;
@@ -74,6 +78,8 @@ namespace KerbalJointReinforcement
 				linkedSet.AddRange(tempPartList.GetRange(1, j)); 
 
 			return linkedSet.Count > 1;
+
+		// FEHLER -> KRJJointUtils.BuildLinkSetDifference nutzen statt dem da oben
 		}
 
 		public void RegisterMultiJoint(Part part, ConfigurableJoint joint, bool direct, Reason jointReason)

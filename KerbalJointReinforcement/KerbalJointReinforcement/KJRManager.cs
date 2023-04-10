@@ -99,7 +99,14 @@ namespace KerbalJointReinforcement
 			{
 				updatingVessels.Remove(v);
 
+KJRJointUtils.jc = 0;
 				RunVesselJointUpdateFunction(v);
+
+ScreenMessages.PostScreenMessage("KJR joints built: " + KJRJointUtils.jc, 30, ScreenMessageStyle.UPPER_CENTER);
+
+			foreach(Part p in v.Parts)
+					p.ReleaseAutoStruts(); // FEHLER, weiss halt nicht
+
 
 #if IncludeAnalyzer
 				KJRAnalyzerJoint.RunVesselJointUpdateFunction(v);
@@ -307,19 +314,7 @@ namespace KerbalJointReinforcement
 					}
 				}
 
-				if(KJRJointUtils.reinforceDecouplersFurther)
-				{
-					ModuleDecouplerBase d = p.GetComponent<ModuleDecouplerBase>(); // FEHLER, wieso nicht auch ModuleDockingNode ??
-				
-					if(p.parent && (p.children.Count > 0) && d && !d.isDecoupled)
-					{
-						bReinforced = true;
-						ReinforceDecouplers(p);
-						continue;
-					}
-				}
-
-				if(KJRJointUtils.reinforceLaunchClampsFurther)
+				if(KJRJointUtils.reinforceLaunchClamps)
 				{
 					if(p.parent && p.GetComponent<LaunchClamp>())
 					{
@@ -332,22 +327,38 @@ namespace KerbalJointReinforcement
 			}
 #endif
 
-			if(bReinforced && !updatedVessels.Contains(v))
-				updatedVessels.Add(v);
-
-			if(bReinforced && KJRJointUtils.reinforceAttachNodes && KJRJointUtils.multiPartAttachNodeReinforcement)
-				MultiPartJointTreeChildren(v);
-
 #if IncludeAnalyzer
 			if(WindowManager.Instance.ReinforceInversions)
 			{
 #endif
-			if(bReinforced && KJRJointUtils.reinforceInversions)
+			if(KJRJointUtils.reinforceInversions)
+			{
 				ReinforceInversions(v);
+				bReinforced = true;
+			}
 
 #if IncludeAnalyzer
 			}
 #endif
+
+#if IncludeAnalyzer
+			if(WindowManager.Instance.BuildExtraStabilityJoints)
+			{
+#endif
+			if(KJRJointUtils.addExtraStabilityJoints)
+			{
+				if(KJRJointUtils.extraLevel >= 2)
+					AdditionalJointsToParent(v);
+
+				AdditionalJointsBetweenEndpoints(v);
+				bReinforced = true;
+			}
+#if IncludeAnalyzer
+			}
+#endif
+
+			if(bReinforced && !updatedVessels.Contains(v))
+				updatedVessels.Add(v);
 		}
 
 #if IncludeAnalyzer
@@ -359,6 +370,12 @@ namespace KerbalJointReinforcement
 			}
 	   }
 #endif
+
+static bool TakeNew = false;
+		static float _l = 0.9f;
+		static float _u = 1.1f;
+
+static int calctype = 2;
 
 		// attachJoint's are always joints from a part to its parent
 		private void ReinforceAttachJoints(Part p)
@@ -374,8 +391,10 @@ namespace KerbalJointReinforcement
 
 			List<ConfigurableJoint> jointList;
 
-			if(p.Modules.Contains<CModuleStrut>())
+			if(p.Modules.Contains<CModuleStrut>())	// FEHLER, wieso dann nicht?
 			{
+float decouplerAndClampJointStrength = float.MaxValue; // FEHLER, temp, neue Zwischenlösung
+
 				CModuleStrut s = p.Modules.GetModule<CModuleStrut>();
 
 				if((s.jointTarget != null) && (s.jointRoot != null))
@@ -392,8 +411,8 @@ namespace KerbalJointReinforcement
 								continue;
 
 							JointDrive strutDrive = j.angularXDrive;
-							strutDrive.positionSpring = KJRJointUtils.decouplerAndClampJointStrength;
-							strutDrive.maximumForce = KJRJointUtils.decouplerAndClampJointStrength;
+							strutDrive.positionSpring = decouplerAndClampJointStrength;
+							strutDrive.maximumForce = decouplerAndClampJointStrength;
 							j.xDrive = j.yDrive = j.zDrive = j.angularXDrive = j.angularYZDrive = strutDrive;
 
 							j.xMotion = j.yMotion = j.zMotion = ConfigurableJointMotion.Locked;
@@ -401,8 +420,8 @@ namespace KerbalJointReinforcement
 
 							//float scalingFactor = (s.jointTarget.mass + s.jointTarget.GetResourceMass() + s.jointRoot.mass + s.jointRoot.GetResourceMass()) * 0.01f;
 
-							j.breakForce = KJRJointUtils.decouplerAndClampJointStrength;
-							j.breakTorque = KJRJointUtils.decouplerAndClampJointStrength;
+							j.breakForce = decouplerAndClampJointStrength;
+							j.breakTorque = decouplerAndClampJointStrength;
 						}
 
 						p.attachMethod = AttachNodeMethod.LOCKED_JOINT;
@@ -416,9 +435,6 @@ namespace KerbalJointReinforcement
 				return;
 
 			StringBuilder debugString = KJRJointUtils.debug ? new StringBuilder() : null;
-
-			bool addAdditionalJointToParent = KJRJointUtils.multiPartAttachNodeReinforcement;
-			addAdditionalJointToParent &= !p.Modules.Contains<CModuleStrut>();
 
 			if(!KJRJointUtils.IsJointUnlockable(p)) // exclude those actions from joints that can be dynamically unlocked
 			{
@@ -466,63 +482,6 @@ namespace KerbalJointReinforcement
 					// if still no node and apparently surface attached, use the normal one if it's there
 					if(node == null && p.attachMode == AttachModes.SRF_ATTACH)
 						node = attach = p.srfAttachNode;
-
-					if(KJRJointUtils.debug)
-					{
-						debugString.AppendLine("Original joint from " + p.partInfo.title + " to " + p.parent.partInfo.title);
-						debugString.AppendLine("  " + p.partInfo.name + " (" + p.flightID + ") -> " + p.parent.partInfo.name + " (" + p.parent.flightID + ")");
-						debugString.AppendLine("");
-						debugString.AppendLine(p.partInfo.title + " Inertia Tensor: " + p.rb.inertiaTensor + " " + p.parent.partInfo.name + " Inertia Tensor: " + connectedBody.inertiaTensor);
-						debugString.AppendLine("");
-
-
-						debugString.AppendLine("Std. Joint Parameters");
-						debugString.AppendLine("Connected Body: " + p.attachJoint.Joint.connectedBody);
-						debugString.AppendLine("Attach mode: " + p.attachMode + " (was " + j.GetType().Name + ")");
-						if(attach != null)
-							debugString.AppendLine("Attach node: " + attach.id + " - " + attach.nodeType + " " + attach.size);
-						if(p_attach != null)
-							debugString.AppendLine("Parent node: " + p_attach.id + " - " + p_attach.nodeType + " " + p_attach.size);
-						debugString.AppendLine("Anchor: " + p.attachJoint.Joint.anchor);
-						debugString.AppendLine("Axis: " + p.attachJoint.Joint.axis);
-						debugString.AppendLine("Sec Axis: " + p.attachJoint.Joint.secondaryAxis);
-						debugString.AppendLine("Break Force: " + p.attachJoint.Joint.breakForce);
-						debugString.AppendLine("Break Torque: " + p.attachJoint.Joint.breakTorque);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Joint Motion Locked: " + Convert.ToString(p.attachJoint.Joint.xMotion == ConfigurableJointMotion.Locked));
-
-						debugString.AppendLine("X Drive");
-						debugString.AppendLine("Position Spring: " + p.attachJoint.Joint.xDrive.positionSpring);
-						debugString.AppendLine("Position Damper: " + p.attachJoint.Joint.xDrive.positionDamper);
-						debugString.AppendLine("Max Force: " + p.attachJoint.Joint.xDrive.maximumForce);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Y Drive");
-						debugString.AppendLine("Position Spring: " + p.attachJoint.Joint.yDrive.positionSpring);
-						debugString.AppendLine("Position Damper: " + p.attachJoint.Joint.yDrive.positionDamper);
-						debugString.AppendLine("Max Force: " + p.attachJoint.Joint.yDrive.maximumForce);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Z Drive");
-						debugString.AppendLine("Position Spring: " + p.attachJoint.Joint.zDrive.positionSpring);
-						debugString.AppendLine("Position Damper: " + p.attachJoint.Joint.zDrive.positionDamper);
-						debugString.AppendLine("Max Force: " + p.attachJoint.Joint.zDrive.maximumForce);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Angular X Drive");
-						debugString.AppendLine("Position Spring: " + p.attachJoint.Joint.angularXDrive.positionSpring);
-						debugString.AppendLine("Position Damper: " + p.attachJoint.Joint.angularXDrive.positionDamper);
-						debugString.AppendLine("Max Force: " + p.attachJoint.Joint.angularXDrive.maximumForce);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Angular YZ Drive");
-						debugString.AppendLine("Position Spring: " + p.attachJoint.Joint.angularYZDrive.positionSpring);
-						debugString.AppendLine("Position Damper: " + p.attachJoint.Joint.angularYZDrive.positionDamper);
-						debugString.AppendLine("Max Force: " + p.attachJoint.Joint.angularYZDrive.maximumForce);
-						debugString.AppendLine("");
-					}
-
 
 					float breakForce = Math.Min(p.breakingForce, connectedPart.breakingForce) * KJRJointUtils.breakForceMultiplier;
 					float breakTorque = Math.Min(p.breakingTorque, connectedPart.breakingTorque) * KJRJointUtils.breakTorqueMultiplier;
@@ -635,14 +594,57 @@ namespace KerbalJointReinforcement
 						momentOfInertia = Mathf.Pow(momentOfInertia, 1.5f);
 					}
 
+					// FEHLER, jetzt probier ich meine Berechnung
+					float momentOfInertia2, breakForce2, breakTorque2;
+if(calctype == 1)
+	{
+					KJRJointUtils.CalculateStrength(p, connectedPart,
+						out momentOfInertia2, out breakForce2, out breakTorque2);
+					}
+else if(calctype == 2)
+					{
+					KJRJointUtils.CalculateStrength2(p, connectedPart,
+						out momentOfInertia2, out breakForce2, out breakTorque2);
+					}
+else
+					{
+					KJRJointUtils.CalculateStrength0(p, connectedPart,
+						out momentOfInertia2, out breakForce2, out breakTorque2);
+momentOfInertia2 = momentOfInertia;
+					}
+
 
 					breakForce = Mathf.Max(KJRJointUtils.breakStrengthPerArea * area, breakForce);
 					breakTorque = Mathf.Max(KJRJointUtils.breakTorquePerMOI * momentOfInertia, breakTorque);
 
+if((momentOfInertia * _l > momentOfInertia2)
+|| (momentOfInertia * _u < momentOfInertia2)
+|| (breakForce * _l > breakForce2)
+|| (breakForce * _u < breakForce2)
+|| (breakTorque * _l > breakTorque2)
+|| (breakTorque * _u < breakTorque2))
+					{
+						// mehr als 10% rauf oder runter
+
+						TakeNew = TakeNew;
+					}
+else if(TakeNew)
+					{
+						momentOfInertia = momentOfInertia2;
+						breakForce = breakForce2;
+						breakTorque = breakTorque2;
+					}
+
 					JointDrive angDrive = j.angularXDrive;
 					angDrive.positionSpring = Mathf.Max(momentOfInertia * KJRJointUtils.angularDriveSpring, angDrive.positionSpring);
 					angDrive.positionDamper = Mathf.Max(momentOfInertia * KJRJointUtils.angularDriveDamper * 0.1f, angDrive.positionDamper);
-					angDrive.maximumForce = breakTorque;
+// FEHLER, xtreme-Debugging
+//if(KJRJointUtils.debug && (angDrive.maximumForce > breakTorque))
+//	Debug.LogError("KJR: weakening joint!!!!!");
+	//				angDrive.maximumForce = breakTorque; -> FEHLER, das macht's wirklich schwächer, aber das andere ist mir fast zu stark
+// FEHLER, neue Idee... weil, das scheint mir etwas komisch hier..., wir machen das Zeug nämlich schwächer?
+angDrive.maximumForce = Mathf.Max(breakTorque, angDrive.maximumForce);
+
 					/*float moi_avg = p.rb.inertiaTensor.magnitude;
 
 					moi_avg += (p.transform.localToWorldMatrix.MultiplyPoint(p.CoMOffset) - p.parent.transform.position).sqrMagnitude * p.rb.mass;
@@ -656,7 +658,12 @@ namespace KerbalJointReinforcement
 					j.angularXDrive = j.angularYZDrive = j.slerpDrive = angDrive;
 
 					JointDrive linDrive = j.xDrive;
-					linDrive.maximumForce = breakForce;
+//if(KJRJointUtils.debug && (linDrive.maximumForce > breakForce))
+//	Debug.LogError("KJR: weakening joint!!!!!");
+	//				linDrive.maximumForce = breakForce; -> FEHLER, das macht's wirklich schwächer, aber das andere ist mir fast zu stark
+// FEHLER, neue Idee... weil, das scheint mir etwas komisch hier..., wir machen das Zeug nämlich schwächer?
+linDrive.maximumForce = Mathf.Max(breakForce, linDrive.maximumForce);
+
 					j.xDrive = j.yDrive = j.zDrive = linDrive;
 
 					j.linearLimit = j.angularYLimit = j.angularZLimit = j.lowAngularXLimit = j.highAngularXLimit
@@ -671,119 +678,16 @@ namespace KerbalJointReinforcement
 
 					j.breakForce = breakForce;			// FEHLER, das hier entfernt das "unbreakable"... wollen wir das? und das SetBreakingForces nachher überschreibt den Wert hier gleich wieder -> klären -> sonst noch korrekten Wert rechne? * PhysicsGlobals.JointBreakForceFactor irgendwas
 					j.breakTorque = breakTorque;		// FEHLER, gleiche Frage wie eine Zeile oberhalb
+
+//PhysicsGlobals.JointBreakForceFactor
+//PhysicsGlobals.JointBreakTorqueFactor
+//if(KJRJointUtils.debug && (linDrive.maximumForce > breakForce))
+//	Debug.LogError("KJR: weakening joint!!!!!");
+// FEHLER, kann hier nix sagen... aber, egal jetzt mal
+
 					p.attachJoint.SetBreakingForces(j.breakForce, j.breakTorque);
 
 					p.attachMethod = AttachNodeMethod.LOCKED_JOINT;
-
-					if(KJRJointUtils.debug)
-					{
-						debugString.AppendLine("Updated joint from " + p.partInfo.title + " to " + p.parent.partInfo.title);
-						debugString.AppendLine("  " + p.partInfo.name + " (" + p.flightID + ") -> " + p.parent.partInfo.name + " (" + p.parent.flightID + ")");
-						debugString.AppendLine("");
-						debugString.AppendLine(p.partInfo.title + " Inertia Tensor: " + p.rb.inertiaTensor + " " + p.parent.partInfo.name + " Inertia Tensor: " + connectedBody.inertiaTensor);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Std. Joint Parameters");
-						debugString.AppendLine("Connected Body: " + p.attachJoint.Joint.connectedBody);
-						debugString.AppendLine("Attach mode: " + p.attachMode + " (was " + j.GetType().Name + ")");
-						if(attach != null)
-							debugString.AppendLine("Attach node: " + attach.id + " - " + attach.nodeType + " " + attach.size);
-						if(p_attach != null)
-							debugString.AppendLine("Parent node: " + p_attach.id + " - " + p_attach.nodeType + " " + p_attach.size);
-						debugString.AppendLine("Anchor: " + p.attachJoint.Joint.anchor);
-						debugString.AppendLine("Axis: " + p.attachJoint.Joint.axis);
-						debugString.AppendLine("Sec Axis: " + p.attachJoint.Joint.secondaryAxis);
-						debugString.AppendLine("Break Force: " + p.attachJoint.Joint.breakForce);
-						debugString.AppendLine("Break Torque: " + p.attachJoint.Joint.breakTorque);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Joint Motion Locked: " + Convert.ToString(p.attachJoint.Joint.xMotion == ConfigurableJointMotion.Locked));
-
-						debugString.AppendLine("Angular Drive");
-						debugString.AppendLine("Position Spring: " + angDrive.positionSpring);
-						debugString.AppendLine("Position Damper: " + angDrive.positionDamper);
-						debugString.AppendLine("Max Force: " + angDrive.maximumForce);
-						debugString.AppendLine("");
-
-						debugString.AppendLine("Cross Section Properties");
-						debugString.AppendLine("Radius: " + radius);
-						debugString.AppendLine("Area: " + area);
-						debugString.AppendLine("Moment of Inertia: " + momentOfInertia);
-					}
-				}
-			}
-
-#if IncludeAnalyzer
-			addAdditionalJointToParent &= WindowManager.Instance.BuildAdditionalJointToParent;
-#endif
-
-			if(addAdditionalJointToParent && p.parent.parent != null
-			&& KJRJointUtils.IsJointAdjustmentAllowed(p.parent))	// verify that parent is not an excluded part -> we will skip this in our calculation, that's why we need to check it now
-			{
-				ConfigurableJoint j = p.attachJoint.Joint; // second steps uses the first/main joint as reference
-
-				Part newConnectedPart = p.parent.parent;
-
-				bool massRatioBelowThreshold = false;
-				int numPartsFurther = 0;
-
-				float partMaxMass = KJRJointUtils.MaximumPossiblePartMass(p);
-				List<Part> partsCrossed = new List<Part>();
-				List<Part> possiblePartsCrossed = new List<Part>();
-
-				partsCrossed.Add(p.parent);
-
-				Part connectedRbPart = newConnectedPart;
-
-				// search the first part with an acceptable mass/mass ration to this part (joints work better then)
-				do
-				{
-					float massRat1 = (partMaxMass < newConnectedPart.mass) ? (newConnectedPart.mass / partMaxMass) : (partMaxMass / newConnectedPart.mass);
-
-					if(massRat1 <= KJRJointUtils.stiffeningExtensionMassRatioThreshold)
-						massRatioBelowThreshold = true;
-					else
-					{
-						float maxMass = KJRJointUtils.MaximumPossiblePartMass(newConnectedPart);
-						float massRat2 = (p.mass < maxMass) ? (maxMass / p.mass) : (p.mass / maxMass);
-						
-						if(massRat2 <= KJRJointUtils.stiffeningExtensionMassRatioThreshold)
-							massRatioBelowThreshold = true;
-						else
-						{
-							if((newConnectedPart.parent == null)
-							|| !KJRJointUtils.IsJointAdjustmentAllowed(newConnectedPart))
-								break;
-
-							newConnectedPart = newConnectedPart.parent;
-
-							if(newConnectedPart.rb == null)
-								possiblePartsCrossed.Add(newConnectedPart);
-							else
-							{
-								connectedRbPart = newConnectedPart;
-								partsCrossed.AddRange(possiblePartsCrossed);
-								partsCrossed.Add(newConnectedPart);
-								possiblePartsCrossed.Clear();
-							}
-
-							numPartsFurther++;
-						}
-					}
-
-				} while(!massRatioBelowThreshold);// && numPartsFurther < 5);
-
-				if(newConnectedPart.rb != null && !multiJointManager.CheckDirectJointBetweenParts(p, newConnectedPart))
-				{
-					ConfigurableJoint newJoint = KJRJointUtils.BuildJoint(p, newConnectedPart,
-						j.xDrive, j.yDrive, j.zDrive, j.angularXDrive, j.breakForce, j.breakTorque);
-
-					// register joint
-					multiJointManager.RegisterMultiJoint(p, newJoint, true, KJRMultiJointManager.Reason.AdditionalJointToParent);
-					multiJointManager.RegisterMultiJoint(newConnectedPart, newJoint, true, KJRMultiJointManager.Reason.AdditionalJointToParent);
-
-					foreach(Part part in partsCrossed)
-						multiJointManager.RegisterMultiJoint(part, newJoint, false, KJRMultiJointManager.Reason.AdditionalJointToParent);
 				}
 			}
 
@@ -791,13 +695,70 @@ namespace KerbalJointReinforcement
 				Debug.Log(debugString.ToString());
 		}
 
-		private void MultiPartJointBuildJoint(Part part, Part linkPart, KJRMultiJointManager.Reason jointReason)
+		private void ReinforceInversionsBuildJoint(KJRJointUtils.Sol2 s)
 		{
-			if(multiJointManager.CheckDirectJointBetweenParts(part, linkPart)
-			|| !multiJointManager.TrySetValidLinkedSet(part, linkPart))
+			if(multiJointManager.CheckDirectJointBetweenParts(s.part, s.linkPart))
+			{
+				++KJRJointUtils.jc;
+				return;
+			}
+
+			ConfigurableJoint joint = KJRJointUtils.BuildJoint(s);
+
+			multiJointManager.RegisterMultiJoint(s.part, joint, true, KJRMultiJointManager.Reason.ReinforceInversions);
+			multiJointManager.RegisterMultiJoint(s.linkPart, joint, true, KJRMultiJointManager.Reason.ReinforceInversions);
+
+			foreach(Part p in s.set)
+				multiJointManager.RegisterMultiJoint(p, joint, false, KJRMultiJointManager.Reason.ReinforceInversions);
+		}
+
+		public void ReinforceInversions(Vessel v)
+		{
+			if(v.Parts.Count <= 1)
 				return;
 
-			ConfigurableJoint joint = KJRJointUtils.BuildJoint(part, linkPart);
+			List<KJRJointUtils.Sol2> sols = new List<KJRJointUtils.Sol2>();
+
+		//	Dictionary<Part, Part> inversionResolutions = new Dictionary<Part,Part>();
+			List<Part> unresolved = new List<Part>();
+
+			KJRJointUtils.FindInversionAndResolutions(v.rootPart, ref sols, ref unresolved);
+
+// FEHLER, mal sehen, was man damit jetzt tun könnte -> eigentlich müsste man das in die Liste der zu verstärkenden teils aufnehmen... irgendwie
+
+			KJRJointUtils.tempPartList = new List<Part>();
+
+			foreach(Part entry in unresolved)
+			{
+				KJRJointUtils.tempPartList.Clear();
+
+				KJRJointUtils.FindChildInversionResolution(entry, ref sols, ref unresolved);
+					// FEHLER, da holen wir mal mögliche Lösungen raus und rechnen für die erste was... nur so zum Test
+					// was wir damit tun? keine Ahnung... und ist irgendwas davon sinnvoll? keine Ahnung... sehen wir dann mal
+			}
+
+			KJRJointUtils.tempPartList = null;
+
+// FEHLER, später die "solutions" zusammenhängen
+	//		foreach(KeyValuePair<Part, Part> entry in inversionResolutions)
+	//			ReinforceInversionsBuildJoint(entry.Key, entry.Value);
+
+			foreach(KJRJointUtils.Sol2 s in sols)
+				ReinforceInversionsBuildJoint(s);
+		}
+
+		private void MultiPartJointBuildJoint(Part part, Part linkPart, KJRMultiJointManager.Reason jointReason)
+		{
+			if(multiJointManager.CheckDirectJointBetweenParts(part, linkPart))
+			{
+				++KJRJointUtils.jc;
+				return;
+			}
+
+			if(!multiJointManager.TrySetValidLinkedSet(part, linkPart))
+				return;
+
+			ConfigurableJoint joint = KJRJointUtils.BuildExtraJoint(part, linkPart);
 
 			multiJointManager.RegisterMultiJoint(part, joint, true, jointReason);
 			multiJointManager.RegisterMultiJoint(linkPart, joint, true, jointReason);
@@ -806,57 +767,125 @@ namespace KerbalJointReinforcement
 				multiJointManager.RegisterMultiJoint(p, joint, false, jointReason);
 		}
 
-			// FEHLER, überarbeiten... ist das nicht etwas sehr viel was wir hier aufbauen???
-		private void ReinforceDecouplers(Part part)
+		public void AdditionalJointsToParent(Vessel v)
 		{
-			List<Part> childParts = new List<Part>();
-			List<Part> parentParts = new List<Part>();
-
-			parentParts = KJRJointUtils.DecouplerPartStiffeningListParents(part.parent);
-
-			foreach(Part p in part.children)
+			foreach(Part p in v.Parts)
 			{
-				if(KJRJointUtils.IsJointAdjustmentAllowed(p))
+				if((p.parent != null) && (p.parent.parent != null) && (p.physicalSignificance == Part.PhysicalSignificance.FULL))
 				{
-					childParts.AddRange(KJRJointUtils.DecouplerPartStiffeningListChildren(p));
-					if(!childParts.Contains(p))
-						childParts.Add(p);
+					ConfigurableJoint j = p.attachJoint.Joint; // second steps uses the first/main joint as reference
+
+float stiffeningExtensionMassRatioThreshold = 5f; // FEHLER, ich will die Funktion hier ausbauen, daher kommt das temp hier rein
+
+					Part newConnectedPart = p.parent.parent;
+
+					bool massRatioBelowThreshold = false;
+					int numPartsFurther = 0;
+
+					float partMaxMass = KJRJointUtils.MaximumPossiblePartMass(p);
+					List<Part> partsCrossed = new List<Part>();
+					List<Part> possiblePartsCrossed = new List<Part>();
+
+					partsCrossed.Add(p.parent);
+
+					Part connectedRbPart = newConnectedPart;
+
+					// search the first part with an acceptable mass/mass ration to this part (joints work better then)
+					do
+					{
+						float massRat1 = (partMaxMass < newConnectedPart.mass) ? (newConnectedPart.mass / partMaxMass) : (partMaxMass / newConnectedPart.mass);
+
+						if(massRat1 <= stiffeningExtensionMassRatioThreshold)
+							massRatioBelowThreshold = true;
+						else
+						{
+							float maxMass = KJRJointUtils.MaximumPossiblePartMass(newConnectedPart);
+							float massRat2 = (p.mass < maxMass) ? (maxMass / p.mass) : (p.mass / maxMass);
+						
+							if(massRat2 <= stiffeningExtensionMassRatioThreshold)
+								massRatioBelowThreshold = true;
+							else
+							{
+								if((newConnectedPart.parent == null)
+								|| !KJRJointUtils.IsJointAdjustmentAllowed(newConnectedPart))
+									break;
+
+								newConnectedPart = newConnectedPart.parent;
+
+								if(newConnectedPart.rb == null)
+									possiblePartsCrossed.Add(newConnectedPart);
+								else
+								{
+									connectedRbPart = newConnectedPart;
+									partsCrossed.AddRange(possiblePartsCrossed);
+									partsCrossed.Add(newConnectedPart);
+									possiblePartsCrossed.Clear();
+								}
+
+								numPartsFurther++;
+							}
+						}
+
+					} while(!massRatioBelowThreshold);// && numPartsFurther < 5);
+
+// FEHLER, könnte man's mit MultiPartJointBuildJoint machen?
+					if(newConnectedPart.rb != null)
+					{
+						if(!multiJointManager.CheckDirectJointBetweenParts(p, newConnectedPart))
+						{
+							ConfigurableJoint newJoint = KJRJointUtils.BuildExtraJoint(p, newConnectedPart);
+
+							// register joint
+							multiJointManager.RegisterMultiJoint(p, newJoint, true, KJRMultiJointManager.Reason.ExtraStabilityJoint);
+							multiJointManager.RegisterMultiJoint(newConnectedPart, newJoint, true, KJRMultiJointManager.Reason.ExtraStabilityJoint);
+
+							foreach(Part part in partsCrossed)
+								multiJointManager.RegisterMultiJoint(part, newJoint, false, KJRMultiJointManager.Reason.ExtraStabilityJoint);
+						}
+						else
+							++KJRJointUtils.jc;
+					}
 				}
 			}
+		}
 
-			parentParts.Add(part);
+		public void AdditionalJointsBetweenEndpoints(Vessel v)
+		{
+			if(v.Parts.Count <= 1)
+				return;
 
-			StringBuilder debugString = null;
+			Dictionary<Part, List<Part>> childPartsToConnectByRoot = new Dictionary<Part,List<Part>>();
 
-			if(KJRJointUtils.debug)
+			KJRJointUtils.FindRootsAndEndPoints(v.rootPart, ref childPartsToConnectByRoot);
+
+			foreach(Part root in childPartsToConnectByRoot.Keys)
 			{
-				debugString = new StringBuilder();
-				debugString.AppendLine(parentParts.Count + " parts above decoupler to be connected to " + childParts.Count + " below decoupler.");
-				debugString.AppendLine("The following joints added by " + part.partInfo.title + " to increase stiffness:");
-			}
-
-			foreach(Part p in parentParts)
-			{
-				if(p == null || p.rb == null || p.Modules.Contains("ProceduralFairingDecoupler"))
+				if(!root.rb) // FEHLER, muss neu immer gelten
 					continue;
 
-				foreach(Part q in childParts)
+				List<Part> childPartsToConnect = childPartsToConnectByRoot[root];
+
+				for(int i = 0; i < childPartsToConnect.Count; ++i)
 				{
-					if(q == null || q.rb == null || p == q || q.Modules.Contains("ProceduralFairingDecoupler"))
-						continue;
+					Part p = childPartsToConnect[i];
 
-					if(p.vessel != q.vessel)
-						continue;
+					Part linkPart = childPartsToConnect[i + 1 >= childPartsToConnect.Count ? 0 : i + 1];
 
-					MultiPartJointBuildJoint(p, q, KJRMultiJointManager.Reason.ReinforceDecoupler);
+					MultiPartJointBuildJoint(p, linkPart, KJRMultiJointManager.Reason.ExtraStabilityJoint);
 
-					if(KJRJointUtils.debug)
-						debugString.AppendLine(p.partInfo.title + " connected to part " + q.partInfo.title);
+
+					int part2Index = i + childPartsToConnect.Count / 2;
+					if(part2Index >= childPartsToConnect.Count)
+						part2Index -= childPartsToConnect.Count;
+
+					Part linkPart2 = childPartsToConnect[part2Index];
+
+					MultiPartJointBuildJoint(p, linkPart2, KJRMultiJointManager.Reason.ExtraStabilityJoint);
+
+
+					MultiPartJointBuildJoint(p, root, KJRMultiJointManager.Reason.ExtraStabilityJoint);
 				}
 			}
-
-			if(KJRJointUtils.debug)
-				Debug.Log(debugString.ToString());
 		}
 
 		private void ReinforceLaunchClamps(Part part)
@@ -884,94 +913,6 @@ namespace KerbalJointReinforcement
 				debugString.AppendLine(part.parent.partInfo.title + " connected to part " + part.partInfo.title);
 				Debug.Log(debugString.ToString());
 			}
-		}
-
-		public void MultiPartJointTreeChildren(Vessel v)
-		{
-			if(v.Parts.Count <= 1)
-				return;
-
-			Dictionary<Part, List<Part>> childPartsToConnectByRoot = new Dictionary<Part,List<Part>>();
-
-			KJRJointUtils.FindRootsAndEndPoints(v.rootPart, ref childPartsToConnectByRoot);
-
-			foreach(Part root in childPartsToConnectByRoot.Keys)
-			{
-				if(!root.rb) // FEHLER, muss neu immer gelten
-					continue;
-
-				List<Part> childPartsToConnect = childPartsToConnectByRoot[root];
-
-				for(int i = 0; i < childPartsToConnect.Count; ++i)
-				{
-					Part p = childPartsToConnect[i];
-
-// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
-if(p.rb == null)
-	Debug.LogError("KJR: MultiPartJointTreeChildren -> p.rb == null!!!!!");
-
-					Part linkPart = childPartsToConnect[i + 1 >= childPartsToConnect.Count ? 0 : i + 1];
-
-// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
-if(linkPart.rb == null)
-	Debug.LogError("KJR: MultiPartJointTreeChildren -> linkPart.rb == null!!!!!");
-
-#if IncludeAnalyzer
-					if(WindowManager.Instance.BuildMultiPartJointTreeChildren)
-#endif
-						MultiPartJointBuildJoint(p, linkPart, KJRMultiJointManager.Reason.MultiPartJointTreeChildren);
-
-
-					int part2Index = i + childPartsToConnect.Count / 2;
-					if(part2Index >= childPartsToConnect.Count)
-						part2Index -= childPartsToConnect.Count;
-
-					Part linkPart2 = childPartsToConnect[part2Index];
-
-// FEHLER, xtreme-Debugging, darf nicht mehr passieren jetzt
-if(linkPart2.rb == null)
-	Debug.LogError("KJR: MultiPartJointTreeChildren -> linkPart2.rb == null!!!!!");
-
-#if IncludeAnalyzer
-					if(WindowManager.Instance.BuildMultiPartJointTreeChildren)
-#endif
-						MultiPartJointBuildJoint(p, linkPart2, KJRMultiJointManager.Reason.MultiPartJointTreeChildren);
-
-
-#if IncludeAnalyzer
-					if(WindowManager.Instance.BuildMultiPartJointTreeChildrenRoot)
-#endif
-						MultiPartJointBuildJoint(p, root, KJRMultiJointManager.Reason.MultiPartJointTreeChildrenRoot);
-				}
-			}
-		}
-
-		private void ReinforceInversionsBuildJoint(Part part, Part linkPart)
-		{
-			if(multiJointManager.CheckDirectJointBetweenParts(part, linkPart)
-			|| !multiJointManager.TrySetValidLinkedSet(part, linkPart))
-				return;
-
-			ConfigurableJoint joint = KJRJointUtils.BuildJoint2(part, linkPart);
-
-			multiJointManager.RegisterMultiJoint(part, joint, true, KJRMultiJointManager.Reason.ReinforceInversions);
-			multiJointManager.RegisterMultiJoint(linkPart, joint, true, KJRMultiJointManager.Reason.ReinforceInversions);
-
-			foreach(Part p in multiJointManager.linkedSet)
-				multiJointManager.RegisterMultiJoint(p, joint, false, KJRMultiJointManager.Reason.ReinforceInversions);
-		}
-
-		public void ReinforceInversions(Vessel v)
-		{
-			if(v.Parts.Count <= 1)
-				return;
-
-			Dictionary<Part, Part> inversionResolutions = new Dictionary<Part,Part>();
-
-			KJRJointUtils.FindInversionAndResolutions(v.rootPart, ref inversionResolutions);
-
-			foreach(KeyValuePair<Part, Part> entry in inversionResolutions)
-				ReinforceInversionsBuildJoint(entry.Key, entry.Value);
 		}
 	}
 }

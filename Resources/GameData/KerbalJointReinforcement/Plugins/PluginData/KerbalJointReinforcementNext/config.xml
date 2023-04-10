@@ -1,16 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <config>
     <bool name="reinforceAttachNodes">1</bool>
-    <bool name="multiPartAttachNodeReinforcement">0</bool>
-    <bool name="reinforceDecouplersFurther">0</bool>
-    <bool name="reinforceLaunchClampsFurther">0</bool>
     <bool name="reinforceInversions">1</bool>
-    <bool name="useVolumeNotArea">1</bool>
-    <bool name="debug">0</bool>
-    <double name="massForAdjustment">0.01</double>
-    <double name="stiffeningExtensionMassRatioThreshold">5</double>
-    <double name="decouplerAndClampJointStrength">-1</double>
+    <bool name="addExtraStabilityJoints">0</bool>
+    <bool name="reinforceLaunchClamps">0</bool>
 
+	<bool name="useVolumeNotArea">1</bool>
+    <double name="massForAdjustment">0.01</double>
+	
     <double name="angularDriveSpring">5e12</double>
     <double name="angularDriveDamper">25</double>
 
@@ -18,4 +15,12 @@
     <double name="breakTorqueMultiplier">1</double>
     <double name="breakStrengthPerArea">1500</double>
     <double name="breakTorquePerMOI">6000</double>
+
+	<double name="inversionMassFactor">2</double>
+	<double name="solutionMassFactor">2</double>
+	<double name="jointMassFactor">8</double>
+
+	<int name="extraLevel">0</int>
+	
+	<bool name="debug">0</bool>
 </config>
