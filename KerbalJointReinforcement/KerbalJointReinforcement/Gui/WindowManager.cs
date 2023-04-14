@@ -198,11 +198,11 @@ namespace KerbalJointReinforcement
 
 			JointLevelSlider.onValueChanged.AddListener((v) =>
 				{
-					int _ExtraStabilityJointLevel = (int)(JointLevelSlider.value + 0.1f);
-					JointLevelValue.text = KJRJointUtils.extraLevel.ToString();
-					OptExtraStabilityJointStrength.SetActive(_ExtraStabilityJointLevel > 0);
-					OptExtraStabilityJointStrengthValue.gameObject.SetActive(_ExtraStabilityJointLevel == 1);
-					OptExtraStabilityJointStrengthConstValue.gameObject.SetActive(_ExtraStabilityJointLevel > 1);
+					int extraLevel = (int)(JointLevelSlider.value + 0.1f);
+					JointLevelValue.text = extraLevel.ToString();
+					OptExtraStabilityJointStrength.SetActive(extraLevel > 0);
+					OptExtraStabilityJointStrengthValue.gameObject.SetActive(extraLevel == 1);
+					OptExtraStabilityJointStrengthConstValue.gameObject.SetActive(extraLevel > 1);
 				});
 
 			var OptShowExtraStabilityJoints = AddNewOption(content, "Show Extra Stability Joints");
