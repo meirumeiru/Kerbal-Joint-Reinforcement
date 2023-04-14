@@ -89,14 +89,12 @@
     <Compile Include="Gui\UIAssetsLoader.cs" />
     <Compile Include="Gui\WindowManager.cs" />
     <Compile Include="KJRAnalyzer.cs" />
-    <Compile Include="KJRAnalyzerJoint.cs" />
     <Compile Include="KJRDockingNode.cs" />
     <Compile Include="KJRExcluded.cs" />
     <Compile Include="KJRManager.cs" />
     <Compile Include="KJRJointUtils.cs" />
-    <Compile Include="KJRMultiJointManager.cs" />
+    <Compile Include="KJRJointTracker.cs" />
     <Compile Include="Gui\Logger.cs" />
-    <None Include="KJRSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Gui\TextureLoader.cs" />
   </ItemGroup>

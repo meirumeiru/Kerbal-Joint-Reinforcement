@@ -2,13 +2,11 @@
 
 namespace KerbalJointReinforcement
 {
-#if IncludeAnalyzer
-
 	public static class Logger
 	{
 		public enum Level
 		{
-			Fatal,
+			Error,
 			Warning,
 			Info,
 			Verbose,
@@ -21,9 +19,9 @@ namespace KerbalJointReinforcement
 		public static void Log(string message, Level level = Level.Info)
 		{
 			message = "KJR: " + message;
-			switch (level)
+			switch(level)
 			{
-				case Level.Fatal:
+				case Level.Error:
 					UnityEngine.Debug.LogError(message);
 					break;
 
@@ -62,6 +60,4 @@ namespace KerbalJointReinforcement
 			}
 		}
 	}
-
-#endif
 }

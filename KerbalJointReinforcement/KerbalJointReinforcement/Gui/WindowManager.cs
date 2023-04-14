@@ -60,15 +60,8 @@ namespace KerbalJointReinforcement
 		private ApplicationLauncherButton appLauncherButton;
 
 		public bool ShowKSPJoints = false;
-		public bool ReinforceExistingJoints = true;
-
-		public bool ReinforceInversions = true;
 		public bool ShowReinforcedInversions = false;
-
-		public bool BuildExtraStabilityJoints = false;
 		public bool ShowExtraStabilityJoints = false;
-
-		public bool ShowInstability = false;
 
 		internal bool GUIEnabled = false;
 
@@ -141,6 +134,7 @@ namespace KerbalJointReinforcement
 
 		////////////////////////////////////////
 		// Settings
+
 		private Toggle AddNewOption(GameObject content, string text)
 		{
 			var Opt = GameObject.Instantiate(UIAssetsLoader.optionLinePrefab);
@@ -174,16 +168,42 @@ namespace KerbalJointReinforcement
 			OptShowKSPJoints.isOn = ShowKSPJoints;
 
 			var OptReinforceExistingJoints = AddNewOption(content, "Reinforce Existing Joints");
-			OptReinforceExistingJoints.isOn = ReinforceExistingJoints;
+			OptReinforceExistingJoints.isOn = KJRJointUtils.reinforceAttachNodes;
 
 			var OptReinforceInversions = AddNewOption(content, "Reinforce Inversions");
-			OptReinforceInversions.isOn = ReinforceInversions;
+			OptReinforceInversions.isOn = KJRJointUtils.reinforceInversions;
 
 			var OptShowReinforcedInversions = AddNewOption(content, "Show Reinforced Inversions");
 			OptShowReinforcedInversions.isOn = ShowReinforcedInversions;
 
-			var OptBuildExtraStabilityJoints = AddNewOption(content, "Build Extra Stability Joints");
-			OptBuildExtraStabilityJoints.isOn = BuildExtraStabilityJoints;
+			var OptExtraStabilityJointLevel = GameObject.Instantiate(UIAssetsLoader.optionSliderLinePrefab);
+			OptExtraStabilityJointLevel.transform.SetParent(content.transform, false);
+			OptExtraStabilityJointLevel.GetChild("Label").GetComponent<Text>().text = "Extra Stability Joint Level";
+			var JointLevelValue = OptExtraStabilityJointLevel.GetChild("Value").GetComponent<Text>();
+			JointLevelValue.text = KJRJointUtils.extraLevel.ToString();
+			var JointLevelSlider = OptExtraStabilityJointLevel.GetChild("Slider").GetComponent<Slider>();
+			JointLevelSlider.value = KJRJointUtils.extraLevel;
+
+			var OptExtraStabilityJointStrength = GameObject.Instantiate(UIAssetsLoader.optionInputLinePrefab);
+			OptExtraStabilityJointStrength.transform.SetParent(content.transform, false);
+			OptExtraStabilityJointStrength.GetChild("Label").GetComponent<Text>().text = "Extra Stability Joint Strength";
+			var OptExtraStabilityJointStrengthValue = OptExtraStabilityJointStrength.GetChild("Value").GetComponent<InputField>();
+			OptExtraStabilityJointStrengthValue.text = KJRJointUtils.extraLinearForce0.ToString();
+			var OptExtraStabilityJointStrengthConstValue = OptExtraStabilityJointStrength.GetChild("ConstValue").GetComponent<Text>();
+			OptExtraStabilityJointStrengthConstValue.text = KJRJointUtils.extraLinearForce.ToString();
+			
+			OptExtraStabilityJointStrength.SetActive(KJRJointUtils.extraLevel > 0);
+			OptExtraStabilityJointStrengthValue.gameObject.SetActive(KJRJointUtils.extraLevel == 1);
+			OptExtraStabilityJointStrengthConstValue.gameObject.SetActive(KJRJointUtils.extraLevel > 1);
+
+			JointLevelSlider.onValueChanged.AddListener((v) =>
+				{
+					int _ExtraStabilityJointLevel = (int)(JointLevelSlider.value + 0.1f);
+					JointLevelValue.text = KJRJointUtils.extraLevel.ToString();
+					OptExtraStabilityJointStrength.SetActive(_ExtraStabilityJointLevel > 0);
+					OptExtraStabilityJointStrengthValue.gameObject.SetActive(_ExtraStabilityJointLevel == 1);
+					OptExtraStabilityJointStrengthConstValue.gameObject.SetActive(_ExtraStabilityJointLevel > 1);
+				});
 
 			var OptShowExtraStabilityJoints = AddNewOption(content, "Show Extra Stability Joints");
 			OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints;
@@ -191,110 +211,108 @@ namespace KerbalJointReinforcement
 			var OptAutoStrutDisplay = AddNewOption(content, "Show AutoStruts");
 			OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
 
-			var OptShowInstability = AddNewOption(content, "Show Instability");
-			OptShowInstability.isOn = ShowInstability;
-
 			var footerButtons = _settingsWindow.GetChild("WindowFooter").GetChild("WindowFooterButtonsHLG");
 	
 			var cancelButton = footerButtons.GetChild("CancelButton").GetComponent<Button>();
 			cancelButton.onClick.AddListener(() =>
 				{
 					OptShowKSPJoints.isOn = ShowKSPJoints;
-					OptReinforceExistingJoints.isOn = ReinforceExistingJoints;
-					OptReinforceInversions.isOn = ReinforceInversions;
+					OptReinforceExistingJoints.isOn = KJRJointUtils.reinforceAttachNodes;
+					OptReinforceInversions.isOn = KJRJointUtils.reinforceInversions;
 					OptShowReinforcedInversions.isOn = ShowReinforcedInversions;
-					OptBuildExtraStabilityJoints.isOn = BuildExtraStabilityJoints;
+					JointLevelValue.text = KJRJointUtils.extraLevel.ToString();
+					JointLevelSlider.value = KJRJointUtils.extraLevel;
+					OptExtraStabilityJointStrength.SetActive(KJRJointUtils.extraLevel > 0);
+					OptExtraStabilityJointStrengthValue.gameObject.SetActive(KJRJointUtils.extraLevel == 1);
+					OptExtraStabilityJointStrengthConstValue.gameObject.SetActive(KJRJointUtils.extraLevel > 1);
 					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints;
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
-					OptShowInstability.isOn = ShowInstability;
 				});
 	
 			var defaultButton = footerButtons.GetChild("DefaultButton").GetComponent<Button>();
 			defaultButton.onClick.AddListener(() =>
 				{
-					bool bCycle = false, bCycle2 = false;
+					bool bCycle = false;
 
 					OptShowKSPJoints.isOn = ShowKSPJoints = false;
 
-					if(!ReinforceExistingJoints)
+					if(!KJRJointUtils.reinforceAttachNodes)
 						bCycle = true;
-					OptReinforceExistingJoints.isOn = ReinforceExistingJoints = true;
+					OptReinforceExistingJoints.isOn = KJRJointUtils.reinforceAttachNodes = true;
 
-					if(!ReinforceInversions)
+					if(!KJRJointUtils.reinforceInversions)
 						bCycle = true;
-					OptReinforceInversions.isOn = ReinforceInversions = true;
+					OptReinforceInversions.isOn = KJRJointUtils.reinforceInversions = true;
 
 					OptShowReinforcedInversions.isOn = ShowReinforcedInversions = false;
 
-					if(BuildExtraStabilityJoints)
+					if(KJRJointUtils.extraLevel != 0)
 						bCycle = true;
-					OptBuildExtraStabilityJoints.isOn = BuildExtraStabilityJoints = false;
+					JointLevelValue.text = KJRJointUtils.extraLevel.ToString();
+					JointLevelSlider.value = KJRJointUtils.extraLevel = 0;
+
+					OptExtraStabilityJointStrength.SetActive(false);
+					KJRJointUtils.extraLinearForce0 = 100f;
+					KJRJointUtils.extraAngularForce0 = 100f;
 
 					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints = false;
 	
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay = false;
 
-					if(ShowInstability)
-						bCycle2 = true;
-					OptShowInstability.isOn = ShowInstability = false;
-
 					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
 
-					if(HighLogic.LoadedSceneIsFlight)
-					{
-						if(bCycle)
-							KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
-						else if(bCycle2)
-							KJRAnalyzerJoint.RunVesselJointUpdateFunction(FlightGlobals.ActiveVessel);
-					}
+					if(HighLogic.LoadedSceneIsFlight && bCycle)
+						KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
 				});
 	
 			var applyButton = footerButtons.GetChild("ApplyButton").GetComponent<Button>();
 			applyButton.onClick.AddListener(() => 
 				{
-					bool bCycle = false, bCycle2 = false;
+					bool bCycle = false;
 
 					ShowKSPJoints = OptShowKSPJoints.isOn;
 
-					if(ReinforceExistingJoints != OptReinforceExistingJoints.isOn)
+					if(KJRJointUtils.reinforceAttachNodes != OptReinforceExistingJoints.isOn)
 					{
 						bCycle = true;
-						ReinforceExistingJoints = OptReinforceExistingJoints.isOn;
+						KJRJointUtils.reinforceAttachNodes = OptReinforceExistingJoints.isOn;
 					}
 
-					if(ReinforceInversions != OptReinforceInversions.isOn)
+					if(KJRJointUtils.reinforceInversions != OptReinforceInversions.isOn)
 					{
 						bCycle = true;
-						ReinforceInversions = OptReinforceInversions.isOn;
+						KJRJointUtils.reinforceInversions = OptReinforceInversions.isOn;
 					}
 
 					ShowReinforcedInversions = OptShowReinforcedInversions.isOn;
 
-					if(BuildExtraStabilityJoints != OptBuildExtraStabilityJoints.isOn)
+					int extraLevel = (int)(JointLevelSlider.value + 0.1f);
+
+					if(KJRJointUtils.extraLevel != extraLevel)
 					{
 						bCycle = true;
-						BuildExtraStabilityJoints = OptBuildExtraStabilityJoints.isOn;
+						KJRJointUtils.extraLevel = extraLevel;
+					}
+
+					float extraLinearForce0;
+					if(float.TryParse(OptExtraStabilityJointStrengthValue.text, out extraLinearForce0)
+					&& (KJRJointUtils.extraLinearForce0 != extraLinearForce0))
+					{
+						if(KJRJointUtils.extraLevel == 1)
+							bCycle = true;
+
+						KJRJointUtils.extraLinearForce0 = extraLinearForce0;
+						KJRJointUtils.extraAngularForce0 = extraLinearForce0;
 					}
 
 					ShowExtraStabilityJoints = OptShowExtraStabilityJoints.isOn;
 
 					PhysicsGlobals.AutoStrutDisplay = OptAutoStrutDisplay.isOn;
 
-					if(ShowInstability != OptShowInstability.isOn)
-					{
-						bCycle2 = true;
-						ShowInstability = OptShowInstability.isOn;
-					}
-
 					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
 
-					if(HighLogic.LoadedSceneIsFlight)
-					{
-						if(bCycle)
-							KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
-						else if(bCycle2)
-							KJRAnalyzerJoint.RunVesselJointUpdateFunction(FlightGlobals.ActiveVessel);
-					}
+					if(HighLogic.LoadedSceneIsFlight && bCycle)
+						KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
 				});
 		}
 
@@ -364,24 +382,7 @@ namespace KerbalJointReinforcement
 				if(isKeyboardLocked)
 					KeyboardLock(false);
 			}
-			
-			// at this point we should have windows instantiated
-			// all we need to do is update the fields
-/* FEHLER, Update fehlt noch
-			foreach(var paKJR in _servoUIControls)
-			{
-				if(!paKJR.Value.activeInHierarchy)
-					continue;
-				UpdateServoReadoutsFlight(paKJR.Key, paKJR.Value);
-			}
-
-			foreach(var paKJR in _servoGroupUIControls) 
-			{
-				if(!paKJR.Value.activeInHierarchy)
-					continue;
-				UpdateGroupReadoutsFlight (paKJR.Key, paKJR.Value);
-			}
-*/		}
+		}
 
 		private void AddAppLauncherButton()
 		{
@@ -403,7 +404,7 @@ namespace KerbalJointReinforcement
 			}
 			catch(Exception ex)
 			{
-				Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Fatal);
+				Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Error);
 			}
 
 			Invalidate();
@@ -530,11 +531,14 @@ namespace KerbalJointReinforcement
 			config.SetValue("dbg_UIAlphaValue", (double)_UIAlphaValue);
 			config.SetValue("dbg_UIScaleValue", (double)_UIScaleValue);
 			config.SetValue("dbg_ShowKSPJoints", ShowKSPJoints);
-			config.SetValue("dbg_ReinforceExistingJoints", ReinforceExistingJoints);
-			config.SetValue("dbg_ReinforceInversions", ReinforceInversions);
 			config.SetValue("dbg_ShowReinforcedInversions", ShowReinforcedInversions);
-			config.SetValue("dbg_BuildExtraStabilityJoints", BuildExtraStabilityJoints);
 			config.SetValue("dbg_ShowExtraStabilityJoints", ShowExtraStabilityJoints);
+
+			config.SetValue("reinforceAttachNodes", KJRJointUtils.reinforceAttachNodes);
+			config.SetValue("reinforceInversions", KJRJointUtils.reinforceInversions);
+			config.SetValue("extraLevel", KJRJointUtils.extraLevel);
+			config.SetValue("extraLinearForce0", KJRJointUtils.extraLinearForce0);
+			config.SetValue("extraAngularForce0", KJRJointUtils.extraAngularForce0);
 
 			config.save();
 		}
@@ -549,10 +553,7 @@ namespace KerbalJointReinforcement
 			_UIAlphaValue = (float)config.GetValue<double>("dbg_UIAlphaValue", 0.8);
 			_UIScaleValue = (float)config.GetValue<double>("dbg_UIScaleValue", 1.0);
 			ShowKSPJoints = config.GetValue<bool>("dbg_ShowKSPJoints", false);
-			ReinforceExistingJoints = config.GetValue<bool>("dbg_ReinforceExistingJoints", true);
-			ReinforceInversions = config.GetValue<bool>("dbg_ReinforceInversions", true);
 			ShowReinforcedInversions = config.GetValue<bool>("dbg_ShowReinforcedInversions", false);
-			BuildExtraStabilityJoints = config.GetValue<bool>("dbg_BuildExtraStabilityJoints", false);
 			ShowExtraStabilityJoints = config.GetValue<bool>("dbg_ShowExtraStabilityJoints", false);
 		}
 	}

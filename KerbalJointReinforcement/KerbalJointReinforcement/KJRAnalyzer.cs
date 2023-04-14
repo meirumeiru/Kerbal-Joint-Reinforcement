@@ -66,11 +66,9 @@ namespace KerbalJointReinforcement
 
 	class KJRAnalyzer
 	{
-		// FEHLER, temp, ich such Kreise
-
 		class item
 		{
-			public ConfigurableJoint joint; // ich schau mir mal keine anderen an... oder müsste man?
+			public ConfigurableJoint joint;
 			public LineDrawer line;
 			public Color color;
 		};
@@ -110,7 +108,7 @@ namespace KerbalJointReinforcement
 
 		static List<itemlist> lists = new List<itemlist>();
 
-		public static void Update()
+		public static void LateUpdate()
 		{
 			if(!bShow)
 				return;
@@ -147,9 +145,9 @@ namespace KerbalJointReinforcement
 			if(!bShow)
 				return;
 
-			Clear(v); // zuerst rausräumen, falls schon vorhanden
+			Clear(v);
 
-			KJRMultiJointManager mjm = KJRManager.Instance.GetMultiJointManager();
+			KJRJointTracker mjm = KJRManager.Instance.GetJointTracker();
 
 			itemlist l = new itemlist();
 			l.vessel = v;
@@ -167,21 +165,21 @@ namespace KerbalJointReinforcement
 
 					switch(mjm.GetJointReason(t.joint))
 					{
-					case KJRMultiJointManager.Reason.None:
+					case KJRJointTracker.Reason.None:
 						if(!WindowManager.Instance.ShowKSPJoints)
 							continue;
 
 						t.color = Color.green;
 						break;
 
-					case KJRMultiJointManager.Reason.ReinforceInversions:
+					case KJRJointTracker.Reason.ReinforceInversions:
 						if(!WindowManager.Instance.ShowReinforcedInversions)
 							continue;
 
 						t.color = Color.magenta;
 						break;
 
-					case KJRMultiJointManager.Reason.ExtraStabilityJoint:
+					case KJRJointTracker.Reason.ExtraStabilityJoint:
 						if(!WindowManager.Instance.ShowExtraStabilityJoints)
 							continue;
 
