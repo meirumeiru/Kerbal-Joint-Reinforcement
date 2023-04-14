@@ -20,11 +20,8 @@ namespace KerbalJointReinforcement
 		public static float massForAdjustment = 0.01f;
 
 		// reinforcement settings
-		public static float angularDriveSpring = 5e12f;
-		public static float angularDriveDamper = 25f;
-
-		public static float breakForceMultiplier = 1f;
-		public static float breakTorqueMultiplier = 1f;
+		public static float breakForceMultiplier = 4f;
+		public static float breakTorqueMultiplier = 4f;
 		public static float breakStrengthPerArea = 1500f;
 		public static float breakTorquePerMOI = 6000f;
 
@@ -76,11 +73,8 @@ namespace KerbalJointReinforcement
 			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
 			massForAdjustment = (float)config.GetValue<double>("massForAdjustment", 0.01f);
 
-			angularDriveSpring = (float)config.GetValue<double>("angularDriveSpring", 5e12f);
-			angularDriveDamper = (float)config.GetValue<double>("angularDriveDamper", 25f);
-
-			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 1f);
-			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 1f);
+			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 4f);
+			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 4f);
 
 			breakStrengthPerArea = (float)config.GetValue<double>("breakStrengthPerArea", 1500f);
 			breakTorquePerMOI = (float)config.GetValue<double>("breakTorquePerMOI", 6000f);
@@ -193,8 +187,8 @@ namespace KerbalJointReinforcement
 				momentOfInertia = Mathf.Pow(momentOfInertia, 1.5f);
 			}
 
-			KJRJointUtils.breakForceMultiplier = 4f; // (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f;
-			KJRJointUtils.breakTorqueMultiplier = 4f; // (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f;
+			// stock breakForceMultiplier is (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f
+			// stock breakTorqueMultiplier is (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f
 
 			float breakForce = Math.Min(part.breakingForce, connectedPart.breakingForce) * KJRJointUtils.breakForceMultiplier;
 			float breakTorque = Math.Min(part.breakingTorque, connectedPart.breakingTorque) * KJRJointUtils.breakTorqueMultiplier;
