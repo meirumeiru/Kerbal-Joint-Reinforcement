@@ -564,7 +564,7 @@ namespace KerbalJointReinforcement
 			newJoint.SetTargetRotationLocal((Quaternion.Inverse(s.part.transform.rotation) * s.linkPart.transform.rotation * (Quaternion.Inverse(s.linkPart.orgRot) * s.part.orgRot)).normalized, Quaternion.identity);
 
 			newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Limited;
-			newJoint.angularYMotion = newJoint.angularZMotion = newJoint.angularXMotion = ConfigurableJointMotion.Limited;
+			newJoint.angularXMotion = newJoint.angularYMotion = newJoint.angularZMotion = ConfigurableJointMotion.Limited;
 
 			JointDrive angularDrive = new JointDrive { maximumForce = s.angularForce, positionSpring = s.angularSpring, positionDamper = s.angularDamper };
 			newJoint.angularXDrive = newJoint.angularYZDrive = newJoint.slerpDrive = angularDrive;
@@ -627,7 +627,7 @@ namespace KerbalJointReinforcement
 			newJoint.SetTargetRotationLocal((Quaternion.Inverse(part.transform.rotation) * linkPart.transform.rotation * (Quaternion.Inverse(linkPart.orgRot) * part.orgRot)).normalized, Quaternion.identity);
 
 			newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Free;
-			newJoint.angularYMotion = newJoint.angularZMotion = newJoint.angularXMotion = ConfigurableJointMotion.Free;
+			newJoint.angularXMotion = newJoint.angularYMotion = newJoint.angularZMotion = ConfigurableJointMotion.Free;
 
 			JointDrive angularDrive = new JointDrive { maximumForce = (extraLevel == 1) ? extraAngularForce0 : extraAngularForce, positionSpring = (extraLevel == 1) ? extraAngularSpring0 : extraAngularSpring, positionDamper = (extraLevel == 1) ? extraAngularDamper0 : extraAngularDamper };
 			newJoint.angularXDrive = newJoint.angularYZDrive = angularDrive; 
