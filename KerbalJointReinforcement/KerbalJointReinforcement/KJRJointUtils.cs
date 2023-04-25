@@ -61,13 +61,25 @@ namespace KerbalJointReinforcement
 		public static List<Part> tempSet2;
 
 
-		public static void LoadConstants()
+		public static void LoadConstants(bool s)
 		{
+			if(s)
+			{
+				KJRSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<KJRSettings>();
+			
+				if(settings != null)
+				{
+					reinforceAttachNodes = settings.reinforceAttachNodes;
+					reinforceInversions = settings.reinforceInversions;
+					extraLevel = !settings.extraJoints ? 0 : settings.extraLevel;
+				}
+			}
+
 			PluginConfiguration config = PluginConfiguration.CreateForType<KJRManager>();
 			config.load();
 
-			reinforceAttachNodes = config.GetValue<bool>("reinforceAttachNodes", true);
-			reinforceInversions = config.GetValue<bool>("reinforceInversions", true);
+			reinforceAttachNodes = config.GetValue<bool>("reinforceAttachNodes", reinforceAttachNodes);
+			reinforceInversions = config.GetValue<bool>("reinforceInversions", reinforceInversions);
 			reinforceLaunchClamps = config.GetValue<bool>("reinforceLaunchClamps", false);
 
 			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
@@ -83,7 +95,7 @@ namespace KerbalJointReinforcement
 			solutionMassFactor = (float)config.GetValue<double>("solutionMassFactor", 2f);
 		//	jointMassFactor = (float)config.GetValue<double>("jointMassFactor", 8f);
 
-			extraLevel = config.GetValue<int>("extraLevel", 0);
+			extraLevel = config.GetValue<int>("extraLevel", extraLevel);
 
 			extraLinearForce0 = (float)config.GetValue<double>("extraLinearForce0", 10f);
 			extraLinearSpring0 = (float)config.GetValue<double>("extraLinearSpring0", PhysicsGlobals.JointForce);

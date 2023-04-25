@@ -6,6 +6,8 @@ using KSP.IO;
 using KSP.UI;
 using KSP.UI.Screens;
 
+// FEHLER, das mit dem Gui ist doof, weil es nicht auf Spiele-Basis arbeitet, sondern global... man könnte zwar sagen, global überschreibt alles, dann muss man allerdings sehen, dass man's zurücksetzen könnte oder so... wobei, ist vielleicht doch besser das dbg zu nennen?
+
 namespace KerbalJointReinforcement
 {
 #if IncludeAnalyzer
@@ -232,16 +234,20 @@ namespace KerbalJointReinforcement
 			var defaultButton = footerButtons.GetChild("DefaultButton").GetComponent<Button>();
 			defaultButton.onClick.AddListener(() =>
 				{
+					KJRSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<KJRSettings>();
+
 					bool bCycle = false;
 
 					OptShowKSPJoints.isOn = ShowKSPJoints = false;
 
 					if(!KJRJointUtils.reinforceAttachNodes)
 						bCycle = true;
+					if(settings != null) settings.reinforceAttachNodes = true;
 					OptReinforceExistingJoints.isOn = KJRJointUtils.reinforceAttachNodes = true;
 
 					if(!KJRJointUtils.reinforceInversions)
 						bCycle = true;
+					if(settings != null) settings.reinforceInversions = true;
 					OptReinforceInversions.isOn = KJRJointUtils.reinforceInversions = true;
 
 					OptShowReinforcedInversions.isOn = ShowReinforcedInversions = false;
@@ -249,6 +255,7 @@ namespace KerbalJointReinforcement
 					if(KJRJointUtils.extraLevel != 0)
 						bCycle = true;
 					JointLevelValue.text = KJRJointUtils.extraLevel.ToString();
+					if(settings != null) { settings.extraJoints = false; settings.extraLevel = 1; }
 					JointLevelSlider.value = KJRJointUtils.extraLevel = 0;
 
 					OptExtraStabilityJointStrength.SetActive(false);
@@ -268,6 +275,8 @@ namespace KerbalJointReinforcement
 			var applyButton = footerButtons.GetChild("ApplyButton").GetComponent<Button>();
 			applyButton.onClick.AddListener(() => 
 				{
+					KJRSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<KJRSettings>();
+
 					bool bCycle = false;
 
 					ShowKSPJoints = OptShowKSPJoints.isOn;
@@ -275,12 +284,14 @@ namespace KerbalJointReinforcement
 					if(KJRJointUtils.reinforceAttachNodes != OptReinforceExistingJoints.isOn)
 					{
 						bCycle = true;
+						if(settings != null) settings.reinforceAttachNodes = OptReinforceExistingJoints.isOn;
 						KJRJointUtils.reinforceAttachNodes = OptReinforceExistingJoints.isOn;
 					}
 
 					if(KJRJointUtils.reinforceInversions != OptReinforceInversions.isOn)
 					{
 						bCycle = true;
+						if(settings != null) settings.reinforceInversions = OptReinforceInversions.isOn;
 						KJRJointUtils.reinforceInversions = OptReinforceInversions.isOn;
 					}
 
@@ -291,6 +302,7 @@ namespace KerbalJointReinforcement
 					if(KJRJointUtils.extraLevel != extraLevel)
 					{
 						bCycle = true;
+						if(settings != null) { settings.extraJoints = (extraLevel > 0); settings.extraLevel = Math.Max(1, extraLevel); }
 						KJRJointUtils.extraLevel = extraLevel;
 					}
 

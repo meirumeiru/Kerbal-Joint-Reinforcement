@@ -1,4 +1,4 @@
-﻿Kerbal Joint Reinforcement Next, v4.1
+﻿Kerbal Joint Reinforcement Next, v4.2
 =====================================
 
 Physics stabilizer plugin for Kerbal Space Program
@@ -10,41 +10,40 @@ Source available at: https://github.com/meirumeiru/Kerbal-Joint-Reinforcement
 ***************************************************
 
 Merge the GameData folder with the existing one in your KSP directory.  KSP will then load it as an add-on.
-The source folder simply contains the source code (in C#) for the plugin.  If you didn't already know what it was, you don't need to worry about it; don't copy it over.
+The source folder simply contains the source code (in C#) for the plugin.  If you didn't already know what it
+was, you don't need to worry about it; don't copy it over.
 
 
 **********************
 ****** FEATURES ******
 **********************
 
+-- Reinforce attach nodes
+
+	- Identifies and reinforces joints that are too weak for the size of the connected parts
+
+	- Identifies and reinforces those joints in a vessel that are too weak due to limitations of the game and
+	  the game engine
+
+-- Add additional joints
+
+	- Optionally adds additional joints to dampen wobbly rockets
+
+	- Optionally adds additional joints between strategically selected parts to reinforce any vessel, even up
+	  to unrealistic levels if selected
+
 -- Physics Easing
 
-	- Slowly dials up external forces (gravity, centrifugal, coriolis) when on the surface of a planet, reducing the initial stress during loading
-	- All parts and joints are strengthened heavily during physics loading (coming off of rails) to prevent Kraken attacks on ships
+	- All parts and joints are strengthened during physics loading (coming off of rails) to prevent Kraken
+	  attacks on ships
 
 -- Launch Clamp Easing
 
 	- Prevents launch clamps from shifting on load, which could destroy the vehicle on the pad
 
--- Stiffen interstage connections
-
-	- Parts connected to a decoupler will be connected to each other, reducing flex at the connection to reasonable levels
-
--- Stiffen launch clamp connections
-
-	- Less vehicle movement on vessel initialization
-	- Warning: may cause spontaneous rocket disintegration if rocket is too large and overconstrained (far too many lanuch clamps; their connections will fight each other and give rise to phantom forces)
-
--- Increase stiffness and strengths of connections
-
-	- Larger parts will have stiffer connections to balance their larger masses / sizes
-	- Sequential parts in a stack will be connected with a stiff, but weak connection to add even more stiffness and counteract wobble
-
 -- Anti-Drift
 
 	- The system works actively against drifting parts.
-
--- Option to make connection strengths weaker to counteract increases in stiffness
 
 -- Parameters can be tweaked in included config.xml file
 
@@ -59,41 +58,52 @@ Location of the file
 
 General Values
 
-	Type	Name					Default Value		Action
+	mode	selected mode, possible values are
 
-	bool	reinforceAttachNodes			1			--Toggles stiffening of all vessel joints
-	bool	multiPartAttachNodeReinforcement	1			--Toggles additional stiffening by connecting parts in a stack one part further, but at a weaker strength
-	bool	reinforceDecouplersFurther		1			--Toggles stiffening of interstage connections
-	bool	reinforceLaunchClampsFurther		1			--Toggles stiffening of launch clamp connections
-	bool	useVolumeNotArea			1			--Switches to calculating connection area based on volume, not area; not technically correct, but allows a better approximation of very large rockets
-	bool	debug					0			--Toggles debug output to log; please activate and provide log if making a bug report
-	float	massForAdjustment			0.01			--Parts below this mass will not be stiffened
-	float	stiffeningExtensionMassRatioThreshold	5			--Sets mass ratio needed between parts to extend Decoupler Stiffening one part further than it normally would have gone; essentially, if the code would have stopped at part A, but part B that it is connected to is >5 times as massive as part A, include part B
-	float	decouplerAndClampJointStrength		-1			--Sets breaking strength for joints involved in decoupler and clamp additional strengthening; -1 makes them unbreakable
+			Realistic (default if nothing is selected)
 
-Angular "Drive" Values (universally scales angular strength of connections)
+				Reinforce attach nodes and simply try to fix those joints that are weak but are not intended
+				to be weak
 
-	Type	Name					Default Value		Action
 
-	float	angularDriveSpring			5e12			--Factor used to scale stiffness of angular connections
-	float	angularDriveDamper			25			--Factor used to scale damping of motion in angular connections
+			RealisticPlus
 
-Joint Strength Values
+				Realistic and also adds weak extra joints to dampen unwanted wobbling of rockets.
 
-	Type	Name					Default Value		Action
 
-	float	breakForceMultiplier			1			--Factor scales the failure strength (for forces) of joint connections; 1 gives stock strength
-	float	breakTorqueMultiplier			1			--Factor scales the failure strength (for torque) of joint connections; 1 gives stock strength
-	float	breakStrengthPerArea			1500			--Overrides above values if not equal to 1; joint strength is based on the area of the part and failure strength is equal to this value times connection area
-	float	breakTorquePerMOI			6000			--Same as above value, but for torques rather than forces and is based on the moment of inertia, not area
+			Rigid
+
+				Realistic and also adds strong extra joints to dampen unwanted wobbling of rockets.
+
+				This mode isn't very realistic anymore. But it helps if you want to fly somewhat "special"
+				configurations.
+
+
+			RigidPlus
+
+				Makes all joints very strong, adds strong extra joints to dampen unwanted wobbling of rockets
+				and adds additional joints from every part to its grand parent.
+
+				Use this mode if you don't want to care about breaking joints. Everything will be as rigid as
+				possible.
+
+
+	A lot more parameters can be tweaked as well, but they are not intendet to be tweaked normally. You can
+	find more about them in the forum and on github.
 
 
 ***********************
 ****** CHANGELOG ******
 ***********************
 
-v4.1.x	-> better version in which joints are not built to keep parts in the place where they currently are, but where they should be according to the original positions
-		this works against the part shift that could be observed in earlier versions and especially together with robotic parts
+v4.2.x	-> new version of KJR, again a re-development of main parts of the mod
+
+		   it has been rebuilt with the idea in mind to bring back realistic joint behaviour and not simply
+		   add more joints to stiffen the ships up to unrealistic levels
+
+v4.1.x	-> better version in which joints are not built to keep parts in the place where they currently are,
+		   but where they should be according to the original positions this works against the part shift that
+		   could be observed in earlier versions and especially together with robotic parts
 
 v4.0.x	-> the new version of KJR, a complete re-development where just ideas are kept from old versions
 

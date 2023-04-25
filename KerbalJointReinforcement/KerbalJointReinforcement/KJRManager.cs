@@ -36,7 +36,7 @@ namespace KerbalJointReinforcement
 
 		public void Awake()
 		{
-			KJRJointUtils.LoadConstants();
+			KJRJointUtils.LoadConstants(true);
 
 			updatedVessels = new List<Vessel>();
 			easingVessels = new HashSet<Vessel>();
