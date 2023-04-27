@@ -1,4 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <config>
-    <string name="mode">Realistic</string>
+	<string name="Easy">1;1;2</string>
+	<bool name="reinforceAttachNodes">1</bool>
+	<bool name="reinforceInversions">1</bool>
+	<int name="extraLevel">0</int>
+	<float name="extraLinearForceW">100</float>
+	<float name="extraLinearSpringW">1E+20</float>
+	<float name="extraLinearDamperW">0</float>
+	<float name="extraAngularForceW">100</float>
+	<float name="extraAngularSpringW">60000</float>
+	<float name="extraAngularDamperW">0</float>
 </config>

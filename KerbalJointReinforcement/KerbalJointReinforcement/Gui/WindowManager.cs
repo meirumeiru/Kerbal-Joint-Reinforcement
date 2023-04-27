@@ -6,8 +6,6 @@ using KSP.IO;
 using KSP.UI;
 using KSP.UI.Screens;
 
-// FEHLER, das mit dem Gui ist doof, weil es nicht auf Spiele-Basis arbeitet, sondern global... man könnte zwar sagen, global überschreibt alles, dann muss man allerdings sehen, dass man's zurücksetzen könnte oder so... wobei, ist vielleicht doch besser das dbg zu nennen?
-
 namespace KerbalJointReinforcement
 {
 #if IncludeAnalyzer
@@ -190,7 +188,7 @@ namespace KerbalJointReinforcement
 			OptExtraStabilityJointStrength.transform.SetParent(content.transform, false);
 			OptExtraStabilityJointStrength.GetChild("Label").GetComponent<Text>().text = "Extra Stability Joint Strength";
 			var OptExtraStabilityJointStrengthValue = OptExtraStabilityJointStrength.GetChild("Value").GetComponent<InputField>();
-			OptExtraStabilityJointStrengthValue.text = KJRJointUtils.extraLinearForce0.ToString();
+			OptExtraStabilityJointStrengthValue.text = KJRJointUtils.extraLinearForceW.ToString();
 			var OptExtraStabilityJointStrengthConstValue = OptExtraStabilityJointStrength.GetChild("ConstValue").GetComponent<Text>();
 			OptExtraStabilityJointStrengthConstValue.text = KJRJointUtils.extraLinearForce.ToString();
 			
@@ -234,6 +232,8 @@ namespace KerbalJointReinforcement
 			var defaultButton = footerButtons.GetChild("DefaultButton").GetComponent<Button>();
 			defaultButton.onClick.AddListener(() =>
 				{
+					// remarks: here "default" means hard coded fix values
+
 					KJRSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<KJRSettings>();
 
 					bool bCycle = false;
@@ -259,8 +259,8 @@ namespace KerbalJointReinforcement
 					JointLevelSlider.value = KJRJointUtils.extraLevel = 0;
 
 					OptExtraStabilityJointStrength.SetActive(false);
-					KJRJointUtils.extraLinearForce0 = 100f;
-					KJRJointUtils.extraAngularForce0 = 100f;
+					KJRJointUtils.extraLinearForceW = 100f;
+					KJRJointUtils.extraAngularForceW = 100f;
 
 					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints = false;
 	
@@ -270,6 +270,8 @@ namespace KerbalJointReinforcement
 
 					if(HighLogic.LoadedSceneIsFlight && bCycle)
 						KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
+
+					GameSettings.SaveSettings();
 				});
 	
 			var applyButton = footerButtons.GetChild("ApplyButton").GetComponent<Button>();
@@ -306,15 +308,15 @@ namespace KerbalJointReinforcement
 						KJRJointUtils.extraLevel = extraLevel;
 					}
 
-					float extraLinearForce0;
-					if(float.TryParse(OptExtraStabilityJointStrengthValue.text, out extraLinearForce0)
-					&& (KJRJointUtils.extraLinearForce0 != extraLinearForce0))
+					float extraLinearForceW;
+					if(float.TryParse(OptExtraStabilityJointStrengthValue.text, out extraLinearForceW)
+					&& (KJRJointUtils.extraLinearForceW != extraLinearForceW))
 					{
 						if(KJRJointUtils.extraLevel == 1)
 							bCycle = true;
 
-						KJRJointUtils.extraLinearForce0 = extraLinearForce0;
-						KJRJointUtils.extraAngularForce0 = extraLinearForce0;
+						KJRJointUtils.extraLinearForceW = extraLinearForceW;
+						KJRJointUtils.extraAngularForceW = extraLinearForceW;
 					}
 
 					ShowExtraStabilityJoints = OptShowExtraStabilityJoints.isOn;
@@ -325,6 +327,8 @@ namespace KerbalJointReinforcement
 
 					if(HighLogic.LoadedSceneIsFlight && bCycle)
 						KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
+
+					GameSettings.SaveSettings();
 				});
 		}
 
@@ -549,8 +553,8 @@ namespace KerbalJointReinforcement
 			config.SetValue("reinforceAttachNodes", KJRJointUtils.reinforceAttachNodes);
 			config.SetValue("reinforceInversions", KJRJointUtils.reinforceInversions);
 			config.SetValue("extraLevel", KJRJointUtils.extraLevel);
-			config.SetValue("extraLinearForce0", KJRJointUtils.extraLinearForce0);
-			config.SetValue("extraAngularForce0", KJRJointUtils.extraAngularForce0);
+			config.SetValue("extraLinearForceW", KJRJointUtils.extraLinearForceW);
+			config.SetValue("extraAngularForceW", KJRJointUtils.extraAngularForceW);
 
 			config.save();
 		}

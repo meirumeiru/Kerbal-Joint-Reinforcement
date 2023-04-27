@@ -36,7 +36,8 @@ namespace KerbalJointReinforcement
 
 		public void Awake()
 		{
-			KJRJointUtils.LoadConstants(true);
+			KJRJointUtils.LoadDefaults();
+			KJRJointUtils.ApplyGameSettings();
 
 			updatedVessels = new List<Vessel>();
 			easingVessels = new HashSet<Vessel>();
@@ -55,6 +56,8 @@ namespace KerbalJointReinforcement
 
 		public void Start()
 		{
+			GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
+
 			GameEvents.onVesselCreate.Add(OnVesselCreate);
 			GameEvents.onVesselWasModified.Add(OnVesselWasModified);
 			GameEvents.onVesselDestroy.Add(OnVesselDestroy); // maybe use onAboutToDestroy instead?? -> doesn't seem to have a benefit
@@ -78,6 +81,8 @@ namespace KerbalJointReinforcement
 
 		public void OnDestroy()
 		{
+			GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
+
 			GameEvents.onVesselCreate.Remove(OnVesselCreate);
 			GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
 			GameEvents.onVesselDestroy.Remove(OnVesselDestroy);
@@ -116,6 +121,15 @@ namespace KerbalJointReinforcement
 				KJRAnalyzer.WasModified(v);
 #endif
 			}
+		}
+
+		private void OnGameSettingsApplied()
+		{
+			if(!KJRJointUtils.ApplyGameSettings())
+				return;
+
+			foreach(Vessel v in FlightGlobals.VesselsLoaded)
+				RunVesselJointUpdateFunctionDelayed(v);
 		}
 
 		private void OnVesselCreate(Vessel v)
@@ -167,7 +181,7 @@ namespace KerbalJointReinforcement
 		{
 			if(!active)
             {
-				foreach (Vessel v in constructingVessels)
+				foreach(Vessel v in constructingVessels)
 					OnVesselWasModified(v);
 				constructingVessels.Clear();
             }
@@ -175,7 +189,7 @@ namespace KerbalJointReinforcement
 
 		private void OnEVAConstructionModePartAttached(Vessel v, Part p)
 		{
-			if (!constructingVessels.Contains(v))
+			if(!constructingVessels.Contains(v))
 				constructingVessels.Add(v);
 		}
 
@@ -183,7 +197,7 @@ namespace KerbalJointReinforcement
 		{
 			jointTracker.RemovePartJoints(p);
 
-			if (!constructingVessels.Contains(v))
+			if(!constructingVessels.Contains(v))
 				constructingVessels.Add(v);
 		}
 

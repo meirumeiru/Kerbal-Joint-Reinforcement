@@ -12,14 +12,25 @@ namespace KerbalJointReinforcement
 	{
 		public static bool loaded = false;
 
+		// presets
+		public struct Preset { public bool reinforceAttachNodes; public bool reinforceInversions; public int extraLevel; };
+
+		public static Preset Default = new Preset { reinforceAttachNodes = true, reinforceInversions = true, extraLevel = 0 };
+		public static Preset Easy = new Preset { reinforceAttachNodes = true, reinforceInversions = true, extraLevel = 2 };
+		public static Preset Normal = new Preset { reinforceAttachNodes = true, reinforceInversions = true, extraLevel = 1 };
+		public static Preset Moderate = new Preset { reinforceAttachNodes = true, reinforceInversions = true, extraLevel = 0 };
+		public static Preset Hard = new Preset { reinforceAttachNodes = true, reinforceInversions = true, extraLevel = 0 };
+
+		// selected options
 		public static bool reinforceAttachNodes = true;
 		public static bool reinforceInversions = true;
 		public static bool reinforceLaunchClamps = false;
+		public static int extraLevel = 0;
 
+		// reinforcement settings
 		public static bool useVolumeNotArea = true;
 		public static float massForAdjustment = 0.01f;
 
-		// reinforcement settings
 		public static float breakForceMultiplier = 4f;
 		public static float breakTorqueMultiplier = 4f;
 		public static float breakStrengthPerArea = 1500f;
@@ -31,19 +42,17 @@ namespace KerbalJointReinforcement
 	//	public static float jointMassFactor = 8f;
 
 		// extra joint settings
-		public static int extraLevel = 0;
-
-		public static float extraLinearForce0 = 10f;
-		public static float extraLinearSpring0 = PhysicsGlobals.JointForce;
-		public static float extraLinearDamper0 = 0f;
+		public static float extraLinearForceW = 10f;
+		public static float extraLinearSpringW = PhysicsGlobals.JointForce;
+		public static float extraLinearDamperW = 0f;
 
 		public static float extraLinearForce = PhysicsGlobals.JointForce;
 		public static float extraLinearSpring = PhysicsGlobals.JointForce;
 		public static float extraLinearDamper = 0f;
 
-		public static float extraAngularForce0 = 10f;
-		public static float extraAngularSpring0 = 60000f;
-		public static float extraAngularDamper0 = 0f;
+		public static float extraAngularForceW = 10f;
+		public static float extraAngularSpringW = 60000f;
+		public static float extraAngularDamperW = 0f;
 
 		public static float extraAngularForce = PhysicsGlobals.JointForce;
 		public static float extraAngularSpring = 60000f;
@@ -61,25 +70,38 @@ namespace KerbalJointReinforcement
 		public static List<Part> tempSet2;
 
 
-		public static void LoadConstants(bool s)
+		private static void LoadPreset(string value, ref Preset preset)
 		{
-			if(s)
-			{
-				KJRSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<KJRSettings>();
-			
-				if(settings != null)
-				{
-					reinforceAttachNodes = settings.reinforceAttachNodes;
-					reinforceInversions = settings.reinforceInversions;
-					extraLevel = !settings.extraJoints ? 0 : settings.extraLevel;
-				}
-			}
+			if(value.Length == 0)
+				return;
 
+			string[] parts = value.Split(';');
+
+			if(parts.Length < 3)
+				return;
+
+			preset = new Preset {
+				reinforceAttachNodes = bool.Parse(parts[0]),
+				reinforceInversions = bool.Parse(parts[1]),
+				extraLevel = int.Parse(parts[2]) };
+		}
+
+		public static void LoadDefaults()
+		{
 			PluginConfiguration config = PluginConfiguration.CreateForType<KJRManager>();
 			config.load();
 
-			reinforceAttachNodes = config.GetValue<bool>("reinforceAttachNodes", reinforceAttachNodes);
-			reinforceInversions = config.GetValue<bool>("reinforceInversions", reinforceInversions);
+			LoadPreset(config.GetValue<string>("Easy", ""), ref Easy);
+			LoadPreset(config.GetValue<string>("Moderate", ""), ref Moderate);
+			LoadPreset(config.GetValue<string>("Normal", ""), ref Normal);
+			LoadPreset(config.GetValue<string>("Hard", ""), ref Hard);
+
+			Default = new Preset {
+				reinforceAttachNodes = config.GetValue<bool>("reinforceAttachNodes", true),
+				reinforceInversions = config.GetValue<bool>("reinforceInversions", true),
+				extraLevel = config.GetValue<int>("extraLevel", 0) };
+
+			ApplyPresets(Default);
 			reinforceLaunchClamps = config.GetValue<bool>("reinforceLaunchClamps", false);
 
 			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
@@ -95,19 +117,17 @@ namespace KerbalJointReinforcement
 			solutionMassFactor = (float)config.GetValue<double>("solutionMassFactor", 2f);
 		//	jointMassFactor = (float)config.GetValue<double>("jointMassFactor", 8f);
 
-			extraLevel = config.GetValue<int>("extraLevel", extraLevel);
-
-			extraLinearForce0 = (float)config.GetValue<double>("extraLinearForce0", 10f);
-			extraLinearSpring0 = (float)config.GetValue<double>("extraLinearSpring0", PhysicsGlobals.JointForce);
-			extraLinearDamper0 = (float)config.GetValue<double>("extraLinearDamper0", 0f);
+			extraLinearForceW = (float)config.GetValue<double>("extraLinearForceW", 10f);
+			extraLinearSpringW = (float)config.GetValue<double>("extraLinearSpringW", PhysicsGlobals.JointForce);
+			extraLinearDamperW = (float)config.GetValue<double>("extraLinearDamperW", 0f);
 
 			extraLinearForce = (float)config.GetValue<double>("extraLinearForce", PhysicsGlobals.JointForce);
 			extraLinearSpring = (float)config.GetValue<double>("extraLinearSpring", PhysicsGlobals.JointForce);
 			extraLinearDamper = (float)config.GetValue<double>("extraLinearDamper", 0f);
 
-			extraAngularForce0 = (float)config.GetValue<double>("extraAngularForce0", 10f);
-			extraAngularSpring0 = (float)config.GetValue<double>("extraAngularSpring0", 60000f);
-			extraAngularDamper0 = (float)config.GetValue<double>("extraAngularDamper0", 0f);
+			extraAngularForceW = (float)config.GetValue<double>("extraAngularForceW", 10f);
+			extraAngularSpringW = (float)config.GetValue<double>("extraAngularSpringW", 60000f);
+			extraAngularDamperW = (float)config.GetValue<double>("extraAngularDamperW", 0f);
 
 			extraAngularForce = (float)config.GetValue<double>("extraAngularForce", PhysicsGlobals.JointForce);
 			extraAngularSpring = (float)config.GetValue<double>("extraAngularSpring", 60000f);
@@ -119,6 +139,45 @@ namespace KerbalJointReinforcement
 			debug = config.GetValue<bool>("debug", false);
 
 			loaded = true;
+		}
+
+		public static bool ApplyPresets(Preset preset)
+		{
+			bool result =
+				   (reinforceAttachNodes != preset.reinforceAttachNodes)
+				|| (reinforceInversions != preset.reinforceInversions)
+				|| (extraLevel != preset.extraLevel);
+
+			if(!result)
+				return false;
+
+			reinforceAttachNodes = preset.reinforceAttachNodes;
+			reinforceInversions = preset.reinforceInversions;
+			extraLevel = preset.extraLevel;
+
+			return true;
+		}
+
+		public static bool ApplyGameSettings()
+		{
+			KJRSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<KJRSettings>();
+
+			if(settings == null)
+				return false;
+
+			bool result =
+				   (reinforceAttachNodes != settings.reinforceAttachNodes)
+				|| (reinforceInversions != settings.reinforceInversions)
+				|| (extraLevel != (settings.extraJoints ? 0 : settings.extraLevel));
+
+			if(!result)
+				return false;
+
+			reinforceAttachNodes = settings.reinforceAttachNodes;
+			reinforceInversions = settings.reinforceInversions;
+			extraLevel = settings.extraJoints ? 0 : settings.extraLevel;
+
+			return true;
 		}
 
 		////////////////////////////////////////
@@ -201,6 +260,7 @@ namespace KerbalJointReinforcement
 
 			// stock breakForceMultiplier is (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f
 			// stock breakTorqueMultiplier is (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f
+// FEHLER, evtl. den hier nutzen und meinen drüber legen? also, zusätzlich?
 
 			float breakForce = Math.Min(part.breakingForce, connectedPart.breakingForce) * KJRJointUtils.breakForceMultiplier;
 			float breakTorque = Math.Min(part.breakingTorque, connectedPart.breakingTorque) * KJRJointUtils.breakTorqueMultiplier;
@@ -641,10 +701,10 @@ namespace KerbalJointReinforcement
 			newJoint.xMotion = newJoint.yMotion = newJoint.zMotion = ConfigurableJointMotion.Free;
 			newJoint.angularXMotion = newJoint.angularYMotion = newJoint.angularZMotion = ConfigurableJointMotion.Free;
 
-			JointDrive angularDrive = new JointDrive { maximumForce = (extraLevel == 1) ? extraAngularForce0 : extraAngularForce, positionSpring = (extraLevel == 1) ? extraAngularSpring0 : extraAngularSpring, positionDamper = (extraLevel == 1) ? extraAngularDamper0 : extraAngularDamper };
+			JointDrive angularDrive = new JointDrive { maximumForce = (extraLevel == 1) ? extraAngularForceW : extraAngularForce, positionSpring = (extraLevel == 1) ? extraAngularSpringW : extraAngularSpring, positionDamper = (extraLevel == 1) ? extraAngularDamperW : extraAngularDamper };
 			newJoint.angularXDrive = newJoint.angularYZDrive = angularDrive; 
 
-			JointDrive linearDrive = new JointDrive { maximumForce = (extraLevel == 1) ? extraLinearForce0 : extraLinearForce, positionSpring = (extraLevel == 1) ? extraLinearSpring0 : extraLinearSpring, positionDamper = (extraLevel == 1) ? extraLinearDamper0 : extraLinearDamper };
+			JointDrive linearDrive = new JointDrive { maximumForce = (extraLevel == 1) ? extraLinearForceW : extraLinearForce, positionSpring = (extraLevel == 1) ? extraLinearSpringW : extraLinearSpring, positionDamper = (extraLevel == 1) ? extraLinearDamperW : extraLinearDamper };
 			newJoint.xDrive = newJoint.yDrive = newJoint.zDrive = linearDrive;
 
 			newJoint.breakForce = extraBreakingForce;
