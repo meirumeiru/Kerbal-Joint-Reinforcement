@@ -57,6 +57,7 @@ namespace KerbalJointReinforcement
 		public void Start()
 		{
 			GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
+			GameEvents.onGameUnpause.Add(OnGameUnpause);
 
 			GameEvents.onVesselCreate.Add(OnVesselCreate);
 			GameEvents.onVesselWasModified.Add(OnVesselWasModified);
@@ -82,6 +83,7 @@ namespace KerbalJointReinforcement
 		public void OnDestroy()
 		{
 			GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
+			GameEvents.onGameUnpause.Remove(OnGameUnpause);
 
 			GameEvents.onVesselCreate.Remove(OnVesselCreate);
 			GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
@@ -128,8 +130,28 @@ namespace KerbalJointReinforcement
 			if(!KJRJointUtils.ApplyGameSettings())
 				return;
 
-			foreach(Vessel v in FlightGlobals.VesselsLoaded)
-				RunVesselJointUpdateFunctionDelayed(v);
+			UpdateAllVessels();
+		}
+
+		private bool runUpdateAfterPause = false;
+
+		public void UpdateAllVessels()
+		{
+			if(FlightDriver.Pause)
+				runUpdateAfterPause = true;
+			else
+			{
+				runUpdateAfterPause = false;
+
+				foreach(Vessel v in FlightGlobals.VesselsLoaded)
+					_instance.OnVesselWasModified(v);
+			}
+		}
+
+		private void OnGameUnpause()
+		{
+			if(runUpdateAfterPause)
+				UpdateAllVessels();
 		}
 
 		private void OnVesselCreate(Vessel v)

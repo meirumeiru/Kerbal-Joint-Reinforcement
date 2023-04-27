@@ -269,8 +269,9 @@ namespace KerbalJointReinforcement
 					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
 
 					if(HighLogic.LoadedSceneIsFlight && bCycle)
-						KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
+						KJRManager.Instance.UpdateAllVessels();
 
+					SaveConfigXml();
 					GameSettings.SaveSettings();
 				});
 	
@@ -326,8 +327,9 @@ namespace KerbalJointReinforcement
 					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
 
 					if(HighLogic.LoadedSceneIsFlight && bCycle)
-						KJRManager.Instance.OnVesselWasModified(FlightGlobals.ActiveVessel);
+						KJRManager.Instance.UpdateAllVessels();
 
+					SaveConfigXml();
 					GameSettings.SaveSettings();
 				});
 		}
@@ -466,7 +468,7 @@ namespace KerbalJointReinforcement
 			Logger.Log("[GUI] destroy");
 
 			KeyboardLock(false);
-			SaveConfigXml();
+		//	SaveConfigXml();
 
 			if(_settingsWindow)
 			{
@@ -530,10 +532,10 @@ namespace KerbalJointReinforcement
 				return Vector3.zero;
 		}
 
-		private void OnSave()
-		{
-			SaveConfigXml();
-		}
+	//	private void OnSave()
+	//	{
+	//		SaveConfigXml();
+	//	}
 
 		public void SaveConfigXml()
 		{

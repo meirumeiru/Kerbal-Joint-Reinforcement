@@ -168,14 +168,14 @@ namespace KerbalJointReinforcement
 			bool result =
 				   (reinforceAttachNodes != settings.reinforceAttachNodes)
 				|| (reinforceInversions != settings.reinforceInversions)
-				|| (extraLevel != (settings.extraJoints ? 0 : settings.extraLevel));
+				|| (extraLevel != (!settings.extraJoints ? 0 : settings.extraLevel));
 
 			if(!result)
 				return false;
 
 			reinforceAttachNodes = settings.reinforceAttachNodes;
 			reinforceInversions = settings.reinforceInversions;
-			extraLevel = settings.extraJoints ? 0 : settings.extraLevel;
+			extraLevel = !settings.extraJoints ? 0 : settings.extraLevel;
 
 			return true;
 		}
