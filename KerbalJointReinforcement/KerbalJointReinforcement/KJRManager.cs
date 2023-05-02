@@ -110,7 +110,7 @@ namespace KerbalJointReinforcement
 		{
 			yield return new WaitForFixedUpdate();
 
-			if (!EVAConstructionModeController.Instance.IsOpen || (EVAConstructionModeController.Instance.panelMode != EVAConstructionModeController.PanelMode.Construction))
+			if(!EVAConstructionModeController.Instance.IsOpen || (EVAConstructionModeController.Instance.panelMode != EVAConstructionModeController.PanelMode.Construction))
 			{
 				updatingVessels.Remove(v);
 
@@ -411,12 +411,8 @@ namespace KerbalJointReinforcement
 				if(j == null)
 					return;
 
-				Rigidbody connectedBody = j.connectedBody;
-Rigidbody t2 = p.attachJoint.Target.Rigidbody; // FEHLER, ist das nicth das gleiche wie connectedBody? dann könnte ich ohne den Joint arbeiten?
-if(KJRJointUtils.debug && (connectedBody != t2))
-	Logger.Log("ReinforceAttachJoints -> connectedBody != t2 !!!", Logger.Level.Error);
+				Part connectedPart = p.attachJoint.Target;
 
-				Part connectedPart = connectedBody.GetComponent<Part>() ?? p.parent;
 				float parentMass = connectedPart.mass + connectedPart.GetResourceMass();
 
 				if(partMass < KJRJointUtils.massForAdjustment || parentMass < KJRJointUtils.massForAdjustment)

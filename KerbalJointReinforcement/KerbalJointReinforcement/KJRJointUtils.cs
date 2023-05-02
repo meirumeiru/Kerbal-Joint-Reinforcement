@@ -31,8 +31,8 @@ namespace KerbalJointReinforcement
 		public static bool useVolumeNotArea = true;
 		public static float massForAdjustment = 0.01f;
 
-		public static float breakForceMultiplier = 4f;
-		public static float breakTorqueMultiplier = 4f;
+		public static float breakForceMultiplier = 1f;
+		public static float breakTorqueMultiplier = 1f;
 		public static float breakStrengthPerArea = 1500f;
 		public static float breakTorquePerMOI = 6000f;
 
@@ -107,8 +107,8 @@ namespace KerbalJointReinforcement
 			useVolumeNotArea = config.GetValue<bool>("useVolumeNotArea", true);
 			massForAdjustment = (float)config.GetValue<double>("massForAdjustment", 0.01f);
 
-			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 4f);
-			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 4f);
+			breakForceMultiplier = (float)config.GetValue<double>("breakForceMultiplier", 1f);
+			breakTorqueMultiplier = (float)config.GetValue<double>("breakTorqueMultiplier", 1f);
 
 			breakStrengthPerArea = (float)config.GetValue<double>("breakStrengthPerArea", 1500f);
 			breakTorquePerMOI = (float)config.GetValue<double>("breakTorquePerMOI", 6000f);
@@ -194,24 +194,24 @@ namespace KerbalJointReinforcement
 		////////////////////////////////////////
 		// find joint reinforcement information
 
-		public static bool IsJointUnlockable(Part p)
+		public static bool IsJointUnlockable(Part part)
 		{
-			for(int i = 0; i < p.Modules.Count; i++)
+			for(int i = 0; i < part.Modules.Count; i++)
 			{
-				if(p.Modules[i] is IJointLockState)
+				if(part.Modules[i] is IJointLockState)
 					return true;
 			}
 
 			return false;
 		}
 
-		public static bool IsJointAdjustmentAllowed(Part p)
+		public static bool IsJointAdjustmentAllowed(Part part)
 		{
 			IJointLockState jointLockState;
 
-			for(int i = 0; i < p.Modules.Count; i++)
+			for(int i = 0; i < part.Modules.Count; i++)
 			{
-				PartModule module = p.Modules[i];
+				PartModule module = part.Modules[i];
 
 				jointLockState = module as IJointLockState;
 				
@@ -225,10 +225,31 @@ namespace KerbalJointReinforcement
 					return false;
 			}
 
-			if((p.parent != null) && p.parent.isRobotic())
+			if((part.parent != null) && part.parent.isRobotic())
 				return false;
 
 			return true;
+		}
+
+		public static void CalculateShadowStrength(Part part, Part connectedPart, int attachNodeSize, out float linearForce, out float torqueForce)
+		{
+			// "shadow calculation" -> never go below stock
+
+			float stackNodeFactor = 2f;
+			float srfNodeFactor = 0.8f;
+
+			float breakingForceModifier = 1f;
+			float breakingTorqueModifier = 1f;
+
+			linearForce = Mathf.Min(part.breakingForce, connectedPart.breakingForce) *
+				breakingForceModifier *
+				(attachNodeSize + 1f) * (part.attachMode == AttachModes.SRF_ATTACH ? srfNodeFactor : stackNodeFactor)
+				/ part.attachJoint.joints.Count;
+
+			torqueForce = Mathf.Min(part.breakingTorque, connectedPart.breakingTorque) *
+				breakingTorqueModifier *
+				(attachNodeSize + 1f) * (part.attachMode == AttachModes.SRF_ATTACH ? srfNodeFactor : stackNodeFactor)
+				/ part.attachJoint.joints.Count;
 		}
 
 		public static bool CalculateStrength(Part part, Part connectedPart, out float momentOfInertia, out float linearForce, out float torqueForce)
@@ -258,33 +279,15 @@ namespace KerbalJointReinforcement
 				momentOfInertia = Mathf.Pow(momentOfInertia, 1.5f);
 			}
 
-			// stock breakForceMultiplier is (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f
-			// stock breakTorqueMultiplier is (attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f
-// FEHLER, evtl. den hier nutzen und meinen drüber legen? also, zusätzlich?
-
-			float breakForce = Math.Min(part.breakingForce, connectedPart.breakingForce) * KJRJointUtils.breakForceMultiplier;
-			float breakTorque = Math.Min(part.breakingTorque, connectedPart.breakingTorque) * KJRJointUtils.breakTorqueMultiplier;
+			float breakForce = Math.Min(part.breakingForce, connectedPart.breakingForce) * ((attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f) * KJRJointUtils.breakForceMultiplier;
+			float breakTorque = Math.Min(part.breakingTorque, connectedPart.breakingTorque) * ((attachNode.nodeType == AttachNode.NodeType.Stack) ? 4f : 1.6f) * KJRJointUtils.breakTorqueMultiplier;
 
 			linearForce = Mathf.Max(KJRJointUtils.breakStrengthPerArea * area, breakForce);
 			torqueForce = Mathf.Max(KJRJointUtils.breakTorquePerMOI * momentOfInertia, breakTorque);
 
 			// "shadow calculation" -> never go below stock
-
-			float stackNodeFactor = 2f;
-			float srfNodeFactor = 0.8f;
-
-			float breakingForceModifier = 1f;
-			float breakingTorqueModifier = 1f;
-
-			float defaultLinearForce = Mathf.Min(part.breakingForce, connectedPart.breakingForce) *
-				breakingForceModifier *
-				(attachNode.size + 1f) * (part.attachMode == AttachModes.SRF_ATTACH ? srfNodeFactor : stackNodeFactor)
-				/ part.attachJoint.joints.Count;
-
-			float defaultTorqueForce = Mathf.Min(part.breakingTorque, connectedPart.breakingTorque) *
-				breakingTorqueModifier *
-				(attachNode.size + 1f) * (part.attachMode == AttachModes.SRF_ATTACH ? srfNodeFactor : stackNodeFactor)
-				/ part.attachJoint.joints.Count;
+			float defaultLinearForce; float defaultTorqueForce;
+			CalculateShadowStrength(part, connectedPart, attachNode.size, out defaultLinearForce, out defaultTorqueForce);
 
 			linearForce = Mathf.Max(linearForce, defaultLinearForce);
 			torqueForce = Mathf.Max(torqueForce, defaultTorqueForce);
@@ -309,6 +312,7 @@ namespace KerbalJointReinforcement
 			lin_maximumForce = Mathf.Min(lin_maximumForce, j.xDrive.maximumForce);
 			lin_positionSpring = Mathf.Min(lin_positionSpring, j.xDrive.positionSpring);
 			lin_positionDamper = Mathf.Min(lin_positionDamper, j.xDrive.positionDamper);
+
 			breakForce = Mathf.Min(breakForce, j.breakForce);
 			breakTorque = Mathf.Min(breakTorque, j.breakTorque);
 
@@ -460,6 +464,23 @@ namespace KerbalJointReinforcement
 			return left.set.Count - right.set.Count;
 		}
 
+		// solutions need to be a little bit bigger to work well, because joints between
+		// heavy parts tend to break easier than between light parts
+
+		static void verifySolution(Solution s)
+		{
+			float mass = Mathf.Min(s.part.mass, s.linkPart.mass);
+			float betweenMass = float.MaxValue;
+
+			foreach(Part part in s.set)
+				betweenMass = Mathf.Min(betweenMass, part.mass);
+
+			float factor = Mathf.Max(mass / (5 * betweenMass), 1f);
+
+			s.breakingForce *= factor;
+			s.breakingTorque *= factor;
+		}
+
 		// search for a bad mass configuration
 		// (a much lighter part on the way up to the root)
 
@@ -546,6 +567,8 @@ namespace KerbalJointReinforcement
 					CalculateOverallStrength(sol.part, sol.linkPart,
 						ref sol.angularForce, ref sol.angularSpring, ref sol.angularDamper, ref sol.linearForce, ref sol.linearSpring, ref sol.linearDamper, ref sol.breakingForce, ref sol.breakingTorque);
 
+					verifySolution(sol);
+
 					sols.Add(sol);
 				}
 				else
@@ -613,6 +636,8 @@ namespace KerbalJointReinforcement
 				if(allSols[idx].breakingForce < allSols[i].breakingForce)
 					idx = i;
 			}
+
+			verifySolution(allSols[idx]);
 
 			sols.Add(allSols[idx]);
 		}

@@ -90,8 +90,8 @@ Joint Strength Values
     bool    useVolumeNotArea        1                    Switches to calculating connection area based on volume, not area; not technically correct, but allows a better approximation of very large rockets
     float   massForAdjustment       0.01                 Parts below this mass will not be stiffened
 
-    float   breakForceMultiplier    4                    Factor scales the failure strength (for forces) of joint connections
-    float   breakTorqueMultiplier   4                    Factor scales the failure strength (for torque) of joint connections
+    float   breakForceMultiplier    1                    Factor scales the failure strength (for forces) of joint connections; 1 is stock strength
+    float   breakTorqueMultiplier   1                    Factor scales the failure strength (for torque) of joint connections; 1 is stock strength
     float   breakStrengthPerArea    1500                 Overrides above values if not equal to 1; joint strength is based on the area of the part and failure strength is equal to this value times connection area
     float   breakTorquePerMOI       6000                 Same as above value, but for torques rather than forces and is based on the moment of inertia, not area
 

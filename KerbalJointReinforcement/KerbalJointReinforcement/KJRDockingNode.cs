@@ -22,7 +22,7 @@ namespace KerbalJointReinforcement
 				{
 					KJRDockingNode module = part.GetComponent<KJRDockingNode>();
 
-					if (!module)
+					if(!module)
 					{
 						module = part.gameObject.AddComponent<KJRDockingNode>();
 						module.dock = dock;
@@ -31,7 +31,7 @@ namespace KerbalJointReinforcement
 					}
 				}
 			}
-			catch (Exception)
+			catch(Exception)
 			{ }
 		}
 
@@ -47,7 +47,7 @@ namespace KerbalJointReinforcement
 
 		protected void ModifyLocked(object obj)
 		{
-			if (HighLogic.LoadedSceneIsFlight)
+			if(HighLogic.LoadedSceneIsFlight)
 				KJRManager.CycleAllAutoStrut(part.vessel);
 		}
 
