@@ -411,7 +411,7 @@ namespace KerbalJointReinforcement
 				if(j == null)
 					return;
 
-				Part connectedPart = p.attachJoint.Target;
+				Part connectedPart = p.attachJoint.Target.RigidBodyPart;
 
 				float parentMass = connectedPart.mass + connectedPart.GetResourceMass();
 
