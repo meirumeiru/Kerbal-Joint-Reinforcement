@@ -110,10 +110,10 @@ namespace KerbalJointReinforcement
 		{
 			yield return new WaitForFixedUpdate();
 
+			updatingVessels.Remove(v);
+
 			if(!EVAConstructionModeController.Instance.IsOpen || (EVAConstructionModeController.Instance.panelMode != EVAConstructionModeController.PanelMode.Construction))
 			{
-				updatingVessels.Remove(v);
-
 				RunVesselJointUpdateFunction(v);
 
 			//	foreach(Part p in v.Parts)
@@ -172,6 +172,9 @@ namespace KerbalJointReinforcement
 
 			if(!v.rootPart.started) // some mods seem to trigger this call too early -> we ignore those calls
 				return;
+
+			if(EVAConstructionModeController.Instance.IsOpen && (EVAConstructionModeController.Instance.panelMode == EVAConstructionModeController.PanelMode.Construction))
+				return; // ignore modifications when we are in construction mode -> an update will be called later
 
 			jointTracker.RemoveAllVesselJoints(v);
 			updatedVessels.Remove(v);
