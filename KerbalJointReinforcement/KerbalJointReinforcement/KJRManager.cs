@@ -76,8 +76,7 @@ namespace KerbalJointReinforcement
 			GameEvents.onRoboticPartLockChanging.Add(OnRoboticPartLockChanging);
 
 			GameEvents.OnEVAConstructionMode.Add(OnEVAConstructionMode);
-			GameEvents.OnEVAConstructionModePartAttached.Add(OnEVAConstructionModePartAttached);
-			GameEvents.OnEVAConstructionModePartDetached.Add(OnEVAConstructionModePartDetached);
+			GameEvents.onEditorPartEvent.Add(OnEditorPartEvent);
 		}
 
 		public void OnDestroy()
@@ -102,8 +101,7 @@ namespace KerbalJointReinforcement
 			GameEvents.onRoboticPartLockChanging.Remove(OnRoboticPartLockChanging);
 
 			GameEvents.OnEVAConstructionMode.Remove(OnEVAConstructionMode);
-			GameEvents.OnEVAConstructionModePartAttached.Remove(OnEVAConstructionModePartAttached);
-			GameEvents.OnEVAConstructionModePartDetached.Remove(OnEVAConstructionModePartDetached);
+			GameEvents.onEditorPartEvent.Remove(OnEditorPartEvent);
 		}
 
 		IEnumerator RunVesselJointUpdateFunctionDelayed(Vessel v)
@@ -212,18 +210,26 @@ namespace KerbalJointReinforcement
             }
 		}
 
-		private void OnEVAConstructionModePartAttached(Vessel v, Part p)
+		public void OnEditorPartEvent(ConstructionEventType evt, Part part)
 		{
-			if(!constructingVessels.Contains(v))
-				constructingVessels.Add(v);
-		}
+			switch(evt)
+			{
+			case ConstructionEventType.PartPicked:
+			case ConstructionEventType.PartDropped:
+			case ConstructionEventType.PartDragging:
+			case ConstructionEventType.PartAttached:
+			case ConstructionEventType.PartDetached:
+			case ConstructionEventType.PartOffsetting:
+			case ConstructionEventType.PartOffset:
+			case ConstructionEventType.PartRotating:
+			case ConstructionEventType.PartRotated:
+				jointTracker.RemovePartJoints(part);
 
-		private void OnEVAConstructionModePartDetached(Vessel v, Part p)
-		{
-			jointTracker.RemovePartJoints(p);
-
-			if(!constructingVessels.Contains(v))
-				constructingVessels.Add(v);
+				if((part.vessel != null)
+				&& !constructingVessels.Contains(part.vessel))
+					constructingVessels.Add(part.vessel);
+				break;
+			}
 		}
 
 		// this function can be called by compatible modules instead of calling
