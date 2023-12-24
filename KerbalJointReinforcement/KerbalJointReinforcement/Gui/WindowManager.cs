@@ -28,6 +28,11 @@ namespace KerbalJointReinforcement
 
 		private static WindowManager _instance;
 
+		public static WindowManager Instance
+		{
+			get { return _instance; }
+		}
+
 		private bool GUIHidden = false;
 
 		// windows
@@ -67,36 +72,54 @@ namespace KerbalJointReinforcement
 
 		private static bool isKeyboardLocked = false;
 
-		public static WindowManager Instance
-		{
-			get { return _instance; }
-		}
-
 		private void Awake()
 		{
+			KJRJointUtils.LoadDefaults();
+			KJRJointUtils.ApplyGameSettings();
+
 			LoadConfigXml();
 
 			KJRAnalyzer.OnLoad(ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints);
 
-			Logger.Log("[NewGUI] awake, Mode: " + AddonName);
-
-			if((HighLogic.LoadedScene != GameScenes.FLIGHT) && (HighLogic.LoadedScene != GameScenes.SPACECENTER))
-			{
-				_instance = null;
-				return;
-			}
-
 			_instance = this;
+		}
+
+		public void Start()
+		{
+			GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
 
 			GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
 			GameEvents.onGUIApplicationLauncherReady.Add(AddAppLauncherButton);
 
-			Logger.Log("[GUI] Added Toolbar GameEvents Handlers", Logger.Level.Debug);
-
 			GameEvents.onShowUI.Add(OnShowUI);
 			GameEvents.onHideUI.Add(OnHideUI);
+		}
 
-			Logger.Log("[GUI] awake finished successfully", Logger.Level.Debug);
+		private void OnDestroy()
+		{
+			KeyboardLock(false);
+		//	SaveConfigXml();
+
+			if(_settingsWindow)
+			{
+				_settingsWindow.DestroyGameObject ();
+				_settingsWindow = null;
+				_settingsWindowFader = null;
+			}
+
+			GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
+
+			GameEvents.onGUIApplicationLauncherReady.Remove(AddAppLauncherButton);
+			GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+			DestroyAppLauncherButton();
+
+			GameEvents.onShowUI.Remove(OnShowUI);
+			GameEvents.onHideUI.Remove(OnHideUI);
+		}
+
+		private void OnGameSettingsApplied()
+		{
+			KJRJointUtils.ApplyGameSettings();
 		}
 
 		private void OnShowUI()
@@ -462,29 +485,6 @@ namespace KerbalJointReinforcement
 			{
 				Logger.Log("[GUI] Failed unregistering AppLauncher handlers," + e.Message);
 			}
-		}
-		private void OnDestroy()
-		{
-			Logger.Log("[GUI] destroy");
-
-			KeyboardLock(false);
-		//	SaveConfigXml();
-
-			if(_settingsWindow)
-			{
-				_settingsWindow.DestroyGameObject ();
-				_settingsWindow = null;
-				_settingsWindowFader = null;
-			}
-
-			GameEvents.onGUIApplicationLauncherReady.Remove (AddAppLauncherButton);
-			GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
-			DestroyAppLauncherButton();
-
-			GameEvents.onShowUI.Remove(OnShowUI);
-			GameEvents.onHideUI.Remove(OnHideUI);
-
-			Logger.Log("[GUI] OnDestroy finished successfully", Logger.Level.Debug);
 		}
 
 		internal void KeyboardLock(Boolean apply)
