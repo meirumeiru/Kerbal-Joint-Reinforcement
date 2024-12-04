@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-
-namespace KerbalJointReinforcement
+﻿namespace KerbalJointReinforcement
 {
 	// class to explicity exclude a part from handling by KJR
 	

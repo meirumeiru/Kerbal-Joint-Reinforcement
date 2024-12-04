@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Reflection;
 using UnityEngine;
-using KSP;
 using KSP.IO;
 
 namespace KerbalJointReinforcement
@@ -39,7 +36,6 @@ namespace KerbalJointReinforcement
 		// inversion settings
 		public static float inversionMassFactor = 2f;
 		public static float solutionMassFactor = 2f;
-	//	public static float jointMassFactor = 8f;
 
 		// extra joint settings
 		public static float extraLinearForceW = 10f;
@@ -115,7 +111,6 @@ namespace KerbalJointReinforcement
 
 			inversionMassFactor = (float)config.GetValue<double>("inversionMassFactor", 2f);
 			solutionMassFactor = (float)config.GetValue<double>("solutionMassFactor", 2f);
-		//	jointMassFactor = (float)config.GetValue<double>("jointMassFactor", 8f);
 
 			extraLinearForceW = (float)config.GetValue<double>("extraLinearForceW", 10f);
 			extraLinearSpringW = (float)config.GetValue<double>("extraLinearSpringW", PhysicsGlobals.JointForce);
@@ -562,7 +557,7 @@ namespace KerbalJointReinforcement
 					sol.set = new List<Part>();
 					BuildLinkSetDirect(part.parent, linkPart, ref sol.set);
 
-					// hab jetzt das, jetzt bau ich mir die Stärke davon
+					// calculate the strength of the solution (set of connected parts)
 
 					CalculateOverallStrength(sol.part, sol.linkPart,
 						ref sol.angularForce, ref sol.angularSpring, ref sol.angularDamper, ref sol.linearForce, ref sol.linearSpring, ref sol.linearDamper, ref sol.breakingForce, ref sol.breakingTorque);

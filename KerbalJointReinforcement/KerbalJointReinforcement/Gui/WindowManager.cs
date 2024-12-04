@@ -43,7 +43,6 @@ namespace KerbalJointReinforcement
 		// settings
 		public static float _UIAlphaValue = 0.8f;
 		public static float _UIScaleValue = 1.0f;
-		private const float UI_FADE_TIME = 0.1f;
 		private const float UI_MIN_ALPHA = 0.2f;
 		private const float UI_MIN_SCALE = 0.5f;
 		private const float UI_MAX_SCALE = 2.0f;
@@ -98,7 +97,6 @@ namespace KerbalJointReinforcement
 		private void OnDestroy()
 		{
 			KeyboardLock(false);
-		//	SaveConfigXml();
 
 			if(_settingsWindow)
 			{
@@ -531,11 +529,6 @@ namespace KerbalJointReinforcement
 			else
 				return Vector3.zero;
 		}
-
-	//	private void OnSave()
-	//	{
-	//		SaveConfigXml();
-	//	}
 
 		public void SaveConfigXml()
 		{

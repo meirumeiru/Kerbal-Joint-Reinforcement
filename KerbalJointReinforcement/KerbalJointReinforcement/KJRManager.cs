@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using CompoundParts;
 
 namespace KerbalJointReinforcement
 {
@@ -625,7 +622,7 @@ namespace KerbalJointReinforcement
 			if(KJRJointUtils.debug)
 				Logger.Log("Launch Clamp Break Force / Torque increased", Logger.Level.Info);
 
-			if(part.parent.Rigidbody != null) // FEHLER, wir tun alles, tragen es aber nur ein, wenn irgendwas einen Rigidbody hat? nicht mal zwingend das Teil selber?
+			if(part.parent.Rigidbody != null)
 				BuildAndRegisterExtraJoint(part, part.parent, KJRJointTracker.Reason.ReinforceLaunchClamp);
 		}
 	}
