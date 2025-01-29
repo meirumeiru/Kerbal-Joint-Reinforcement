@@ -39,10 +39,17 @@ namespace KerbalJointReinforcement
 		public int extraLevel = 1;
 
 		[GameParameters.CustomStringParameterUI("")]
-		public string spacer = "";
+		public string spacer1 = "";
 
 		[GameParameters.CustomStringParameterUI("", lines = 2)]
 		public string extraLevelDescription = "";
+
+		[GameParameters.CustomStringParameterUI("")]
+		public string spacer2 = "";
+
+		[GameParameters.CustomParameterUI("Disable AutoStruts",
+			toolTip = "Disables all AutoStruts")]
+		public bool disableAutoStruts = false;
 
 		public override bool Interactible(MemberInfo member, GameParameters parameters)
 		{
@@ -83,6 +90,7 @@ namespace KerbalJointReinforcement
 				reinforceInversions = KJRJointUtils.Easy.reinforceInversions;
 				extraJoints = KJRJointUtils.Easy.extraLevel > 0;
 				extraLevel = KJRJointUtils.Easy.extraLevel;
+				disableAutoStruts = false;
 				break;
 
 			case GameParameters.Preset.Normal:
@@ -90,6 +98,7 @@ namespace KerbalJointReinforcement
 				reinforceInversions = KJRJointUtils.Normal.reinforceInversions;
 				extraJoints = KJRJointUtils.Normal.extraLevel > 0;
 				extraLevel = KJRJointUtils.Normal.extraLevel;
+				disableAutoStruts = false;
 				break;
 
 			case GameParameters.Preset.Moderate:
@@ -97,6 +106,7 @@ namespace KerbalJointReinforcement
 				reinforceInversions = KJRJointUtils.Moderate.reinforceInversions;
 				extraJoints = KJRJointUtils.Moderate.extraLevel > 0;
 				extraLevel = KJRJointUtils.Moderate.extraLevel;
+				disableAutoStruts = false;
 				break;
 
 			case GameParameters.Preset.Hard:
@@ -104,6 +114,7 @@ namespace KerbalJointReinforcement
 				reinforceInversions = KJRJointUtils.Hard.reinforceInversions;
 				extraJoints = KJRJointUtils.Hard.extraLevel > 0;
 				extraLevel = KJRJointUtils.Hard.extraLevel;
+				disableAutoStruts = false;
 				break;
 			}
 		}

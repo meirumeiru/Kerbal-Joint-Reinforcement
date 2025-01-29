@@ -126,12 +126,11 @@ namespace KerbalJointReinforcement
 					}
 					catch(Exception)
 					{
-						// how's that possible? ... well, anyway, it's just a debug-window... I'll search this later
-						if(lists[i].items[j].joint == null)
-						{
-							lists[i].items[j].line.Destroy();
-							lists[i].items.RemoveAt(j--);
-						}
+						// ignore this joint
+						// it may have been disconnected by the game/a mod or failed or was an autostrut
+
+						lists[i].items[j].line.Destroy();
+						lists[i].items.RemoveAt(j--);
 					}
 				}
 			}
@@ -156,6 +155,9 @@ namespace KerbalJointReinforcement
 
 				for(int i = 0; i < joints.Length; i++)
 				{
+					if(joints[i].connectedBody == null)
+						continue;
+
 					item t = new item();
 					
 					t.joint = joints[i];
@@ -194,6 +196,43 @@ namespace KerbalJointReinforcement
 				lists.Add(l);
 		}
 
+		public static void Clear(ConfigurableJoint jt)
+		{
+			for(int i = 0; i < lists.Count; i++)
+			{
+				for(int j = 0; j < lists[i].items.Count; j++)
+				{
+					if(lists[i].items[j].joint == jt)
+					{
+						lists[i].items[j].line.Destroy();
+						lists[i].items.RemoveAt(j--);
+
+						return;
+					}
+				}
+			}
+		}
+
+		public static void Clear(Part p)
+		{
+			for(int i = 0; i < lists.Count; i++)
+			{
+				if(lists[i].vessel == p.vessel)
+				{
+					for(int j = 0; j < lists[i].items.Count; j++)
+					{
+						if(lists[i].items[j].joint.gameObject == p.gameObject)
+						{
+							lists[i].items[j].line.Destroy();
+							lists[i].items.RemoveAt(j--);
+						}
+					}
+
+					return;
+				}
+			}
+		}
+
 		public static void Clear(Vessel v)
 		{
 			for(int i = 0; i < lists.Count; i++)
@@ -204,9 +243,21 @@ namespace KerbalJointReinforcement
 						lists[i].items[j].line.Destroy();
 
 					lists.RemoveAt(i);
+
 					return;
 				}
 			}
+		}
+
+		public static void ClearAll()
+		{
+			for(int i = 0; i < lists.Count; i++)
+			{
+				for(int j = 0; j < lists[i].items.Count; j++)
+					lists[i].items[j].line.Destroy();
+			}
+
+			lists.Clear();
 		}
 	}
 

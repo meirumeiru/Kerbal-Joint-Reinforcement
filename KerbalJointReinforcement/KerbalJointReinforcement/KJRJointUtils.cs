@@ -23,6 +23,7 @@ namespace KerbalJointReinforcement
 		public static bool reinforceInversions = true;
 		public static bool reinforceLaunchClamps = false;
 		public static int extraLevel = 0;
+		public static bool disableAutoStruts = false;
 
 		// reinforcement settings
 		public static bool useVolumeNotArea = true;
@@ -141,7 +142,8 @@ namespace KerbalJointReinforcement
 			bool result =
 				   (reinforceAttachNodes != preset.reinforceAttachNodes)
 				|| (reinforceInversions != preset.reinforceInversions)
-				|| (extraLevel != preset.extraLevel);
+				|| (extraLevel != preset.extraLevel)
+				|| (disableAutoStruts != false);
 
 			if(!result)
 				return false;
@@ -149,6 +151,7 @@ namespace KerbalJointReinforcement
 			reinforceAttachNodes = preset.reinforceAttachNodes;
 			reinforceInversions = preset.reinforceInversions;
 			extraLevel = preset.extraLevel;
+			disableAutoStruts = false;
 
 			return true;
 		}
@@ -163,7 +166,8 @@ namespace KerbalJointReinforcement
 			bool result =
 				   (reinforceAttachNodes != settings.reinforceAttachNodes)
 				|| (reinforceInversions != settings.reinforceInversions)
-				|| (extraLevel != (!settings.extraJoints ? 0 : settings.extraLevel));
+				|| (extraLevel != (!settings.extraJoints ? 0 : settings.extraLevel))
+				|| (disableAutoStruts != settings.disableAutoStruts);
 
 			if(!result)
 				return false;
@@ -171,6 +175,7 @@ namespace KerbalJointReinforcement
 			reinforceAttachNodes = settings.reinforceAttachNodes;
 			reinforceInversions = settings.reinforceInversions;
 			extraLevel = !settings.extraJoints ? 0 : settings.extraLevel;
+			disableAutoStruts = settings.disableAutoStruts;
 
 			return true;
 		}

@@ -229,6 +229,9 @@ namespace KerbalJointReinforcement
 			var OptShowExtraStabilityJoints = AddNewOption(content, "Show Extra Stability Joints");
 			OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints;
 
+			var OptDisableAutoStruts = AddNewOption(content, "Disable AutoStruts");
+			OptDisableAutoStruts.isOn = KJRJointUtils.disableAutoStruts;
+
 			var OptAutoStrutDisplay = AddNewOption(content, "Show AutoStruts");
 			OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
 
@@ -247,6 +250,7 @@ namespace KerbalJointReinforcement
 					OptExtraStabilityJointStrengthValue.gameObject.SetActive(KJRJointUtils.extraLevel == 1);
 					OptExtraStabilityJointStrengthConstValue.gameObject.SetActive(KJRJointUtils.extraLevel > 1);
 					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints;
+					OptDisableAutoStruts.isOn = KJRJointUtils.disableAutoStruts;
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay;
 				});
 	
@@ -285,6 +289,8 @@ namespace KerbalJointReinforcement
 
 					OptShowExtraStabilityJoints.isOn = ShowExtraStabilityJoints = false;
 	
+					OptDisableAutoStruts.isOn = KJRJointUtils.disableAutoStruts = false;
+
 					OptAutoStrutDisplay.isOn = PhysicsGlobals.AutoStrutDisplay = false;
 
 					KJRAnalyzer.Show = ShowKSPJoints | ShowReinforcedInversions | ShowExtraStabilityJoints;
@@ -342,6 +348,8 @@ namespace KerbalJointReinforcement
 					}
 
 					ShowExtraStabilityJoints = OptShowExtraStabilityJoints.isOn;
+
+					KJRJointUtils.disableAutoStruts = OptDisableAutoStruts.isOn;
 
 					PhysicsGlobals.AutoStrutDisplay = OptAutoStrutDisplay.isOn;
 

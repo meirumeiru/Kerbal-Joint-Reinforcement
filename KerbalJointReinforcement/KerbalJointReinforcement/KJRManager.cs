@@ -56,24 +56,28 @@ namespace KerbalJointReinforcement
 			GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
 			GameEvents.onGameUnpause.Add(OnGameUnpause);
 
-			GameEvents.onVesselCreate.Add(OnVesselCreate);
 			GameEvents.onVesselWasModified.Add(OnVesselWasModified);
-			GameEvents.onVesselDestroy.Add(OnVesselDestroy); // maybe use onAboutToDestroy instead?? -> doesn't seem to have a benefit
 
 			GameEvents.onVesselGoOffRails.Add(OnVesselOffRails);
 			GameEvents.onVesselGoOnRails.Add(OnVesselOnRails);
 
-			GameEvents.onPartDestroyed.Add(RemovePartJoints);
-			GameEvents.onPartDie.Add(RemovePartJoints);
-			GameEvents.onPartDeCouple.Add(RemovePartJoints);
-
-			GameEvents.onPhysicsEaseStart.Add(OnEaseStart);
-			GameEvents.onPhysicsEaseStop.Add(OnEaseStop);
+			GameEvents.onVesselUnloaded.Add(OnVesselUnloaded);
+			GameEvents.onVesselDestroy.Add(OnVesselDestroy);
 
 			GameEvents.onRoboticPartLockChanging.Add(OnRoboticPartLockChanging);
 
 			GameEvents.OnEVAConstructionMode.Add(OnEVAConstructionMode);
 			GameEvents.onEditorPartEvent.Add(OnEditorPartEvent);
+
+			GameEvents.onPartDestroyed.Add(RemovePartJoints);
+			GameEvents.onPartDie.Add(RemovePartJoints);
+
+#if IncludeAnalyzer
+			GameEvents.OnRevertToLaunchFlightState.Add(OnRevertToLaunchFlightState);
+#endif
+
+			GameEvents.onPhysicsEaseStart.Add(OnEaseStart);
+			GameEvents.onPhysicsEaseStop.Add(OnEaseStop);
 		}
 
 		public void OnDestroy()
@@ -81,24 +85,28 @@ namespace KerbalJointReinforcement
 			GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
 			GameEvents.onGameUnpause.Remove(OnGameUnpause);
 
-			GameEvents.onVesselCreate.Remove(OnVesselCreate);
 			GameEvents.onVesselWasModified.Remove(OnVesselWasModified);
-			GameEvents.onVesselDestroy.Remove(OnVesselDestroy);
 
 			GameEvents.onVesselGoOffRails.Remove(OnVesselOffRails);
 			GameEvents.onVesselGoOnRails.Remove(OnVesselOnRails);
 
-			GameEvents.onPartDestroyed.Remove(RemovePartJoints);
-			GameEvents.onPartDie.Remove(RemovePartJoints);
-			GameEvents.onPartDeCouple.Remove(RemovePartJoints);
-
-			GameEvents.onPhysicsEaseStart.Remove(OnEaseStart);
-			GameEvents.onPhysicsEaseStop.Remove(OnEaseStop);
+			GameEvents.onVesselUnloaded.Remove(OnVesselUnloaded);
+			GameEvents.onVesselDestroy.Remove(OnVesselDestroy);
 
 			GameEvents.onRoboticPartLockChanging.Remove(OnRoboticPartLockChanging);
 
 			GameEvents.OnEVAConstructionMode.Remove(OnEVAConstructionMode);
 			GameEvents.onEditorPartEvent.Remove(OnEditorPartEvent);
+
+			GameEvents.onPartDestroyed.Remove(RemovePartJoints);
+			GameEvents.onPartDie.Remove(RemovePartJoints);
+
+#if IncludeAnalyzer
+			GameEvents.OnRevertToLaunchFlightState.Remove(OnRevertToLaunchFlightState);
+#endif
+
+			GameEvents.onPhysicsEaseStart.Remove(OnEaseStart);
+			GameEvents.onPhysicsEaseStop.Remove(OnEaseStop);
 		}
 
 		IEnumerator RunVesselJointUpdateFunctionDelayed(Vessel v)
@@ -110,9 +118,6 @@ namespace KerbalJointReinforcement
 			if(!EVAConstructionModeController.Instance.IsOpen || (EVAConstructionModeController.Instance.panelMode != EVAConstructionModeController.PanelMode.Construction))
 			{
 				RunVesselJointUpdateFunction(v);
-
-			//	foreach(Part p in v.Parts)
-			//		p.ReleaseAutoStruts();
 
 #if IncludeAnalyzer
 				KJRAnalyzer.WasModified(v);
@@ -149,16 +154,7 @@ namespace KerbalJointReinforcement
 				UpdateAllVessels();
 		}
 
-		private void OnVesselCreate(Vessel v)
-		{
-			jointTracker.RemoveAllVesselJoints(v);
 
-			updatedVessels.Remove(v);
-
-#if IncludeAnalyzer
-			KJRAnalyzer.WasModified(v);
-#endif
-		}
 
 		internal void OnVesselWasModified(Vessel v)
 		{
@@ -174,6 +170,10 @@ namespace KerbalJointReinforcement
 			jointTracker.RemoveAllVesselJoints(v);
 			updatedVessels.Remove(v);
 
+#if IncludeAnalyzer
+			KJRAnalyzer.Clear(v);
+#endif
+
 			if(!updatingVessels.Contains(v))
 			{
 				updatingVessels.Add(v);
@@ -181,10 +181,51 @@ namespace KerbalJointReinforcement
 			}
 		}
 
+		private void OnVesselOffRails(Vessel v)
+		{
+			if((object)v == null || v.isEVA || v.GetComponent<KerbalEVA>())
+				return; 
+
+			if(!updatingVessels.Contains(v))
+			{
+				updatingVessels.Add(v);
+				StartCoroutine(RunVesselJointUpdateFunctionDelayed(v));
+			}
+		}
+
+		private void OnVesselOnRails(Vessel v)
+		{
+			if((object)v == null)
+				return;
+
+			if(updatedVessels.Contains(v))
+			{
+				jointTracker.RemoveAllVesselJoints(v);
+				updatedVessels.Remove(v);
+
+#if IncludeAnalyzer
+				KJRAnalyzer.Clear(v);
+#endif
+			}
+		}
+
+		private void OnVesselUnloaded(Vessel v)
+		{
+			easingVessels.Remove(v);
+
+			jointTracker.RemoveAllVesselJoints(v);
+			updatedVessels.Remove(v);
+
+#if IncludeAnalyzer
+			KJRAnalyzer.Clear(v);
+#endif
+		}
+
 		private void OnVesselDestroy(Vessel v)
 		{
 			easingVessels.Remove(v);
 
+			jointTracker.RemoveAllVesselJoints(v);
 			updatedVessels.Remove(v);
 
 #if IncludeAnalyzer
@@ -220,7 +261,7 @@ namespace KerbalJointReinforcement
 			case ConstructionEventType.PartOffset:
 			case ConstructionEventType.PartRotating:
 			case ConstructionEventType.PartRotated:
-				jointTracker.RemovePartJoints(part);
+				RemovePartJoints(part);
 
 				if((part.vessel != null)
 				&& !constructingVessels.Contains(part.vessel))
@@ -229,42 +270,21 @@ namespace KerbalJointReinforcement
 			}
 		}
 
-		// this function can be called by compatible modules instead of calling
-		// Vessel.CycleAllAutoStrut, if you want only KJR to cycle the extra joints
-		public static void CycleAllAutoStrut(Vessel v)
-		{
-			_instance.OnVesselWasModified(v);
-		}
-
-		private void OnVesselOnRails(Vessel v)
-		{
-			if((object)v == null)
-				return;
-
-			if(updatedVessels.Contains(v))
-			{
-				jointTracker.RemoveAllVesselJoints(v);
-
-				updatedVessels.Remove(v);
-			}
-		}
-
-		private void OnVesselOffRails(Vessel v)
-		{
-			if((object)v == null || v.isEVA || v.GetComponent<KerbalEVA>())
-				return; 
-
-			if(!updatingVessels.Contains(v))
-			{
-				updatingVessels.Add(v);
-				StartCoroutine(RunVesselJointUpdateFunctionDelayed(v));
-			}
-		}
-
 		private void RemovePartJoints(Part p)
 		{
 			jointTracker.RemovePartJoints(p);
+
+#if IncludeAnalyzer
+			KJRAnalyzer.Clear(p);
+#endif
 		}
+
+#if IncludeAnalyzer
+		private void OnRevertToLaunchFlightState(FlightState st)
+		{
+			KJRAnalyzer.ClearAll();
+		}
+#endif
 
 		public void OnEaseStart(Vessel v)
 		{
@@ -319,6 +339,13 @@ namespace KerbalJointReinforcement
 			}
 		}
 
+		// this function can be called by compatible modules instead of calling
+		// Vessel.CycleAllAutoStrut, if you want only KJR to cycle the extra joints
+		public static void CycleAllAutoStrut(Vessel v)
+		{
+			_instance.OnVesselWasModified(v);
+		}
+
 		private void RunVesselJointUpdateFunction(Vessel v)
 		{
 			if(KJRJointUtils.debug)
@@ -335,6 +362,22 @@ namespace KerbalJointReinforcement
 
 			foreach(Part p in v.Parts)
 			{
+				if(KJRJointUtils.disableAutoStruts)
+				{
+					if(p.autoStrutEnableOptionFlight)
+					{
+						p.autoStrutEnableOptionFlight = false;
+						p.Events["ToggleAutoStrut"].guiActive = false;
+					}
+
+					if(p.autoStrutMode != Part.AutoStrutMode.Off)
+					{
+						p.autoStrutMode = Part.AutoStrutMode.Off;
+						p.ReleaseAutoStruts();
+					//	p.Events["ToggleAutoStrut"].guiName = "#autoLOC_6001318";
+					}
+				}
+
 				KJRDockingNode.InitializePart(p);
 
 				if(KJRJointUtils.reinforceAttachNodes)

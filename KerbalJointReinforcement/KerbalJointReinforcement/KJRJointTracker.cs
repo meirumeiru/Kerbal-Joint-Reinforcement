@@ -98,29 +98,26 @@ namespace KerbalJointReinforcement
 */
 		public void RemoveAllVesselJoints(Vessel v)
 		{
-			if(v.loaded)
+			List<Part> toRemove = new List<Part>();
+
+			foreach(var e in jointDict)
 			{
-				List<Part> toRemove = new List<Part>();
-
-				foreach(var e in jointDict)
+				if(e.Key.vessel == v)
 				{
-					if(e.Key.vessel == v)
+					foreach(ConfigurableJointWithInfo jointWI in e.Value)
 					{
-						foreach(ConfigurableJointWithInfo jointWI in e.Value)
-						{
-							jointReasonDict.Remove(jointWI.joint);
+						jointReasonDict.Remove(jointWI.joint);
 
-							if(jointWI.joint != null)
-								GameObject.Destroy(jointWI.joint);
-						}
-
-						toRemove.Add(e.Key);
+						if(jointWI.joint != null)
+							GameObject.Destroy(jointWI.joint);
 					}
-				}
 
-				foreach(Part part in toRemove)
-					jointDict.Remove(part);
+					toRemove.Add(e.Key);
+				}
 			}
+
+			foreach(Part part in toRemove)
+				jointDict.Remove(part);
 		}
 
 		public void RemovePartJoints(Part part)
