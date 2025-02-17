@@ -289,7 +289,7 @@ namespace KerbalJointReinforcement
 		public void OnEaseStart(Vessel v)
 		{
 			if(KJRJointUtils.debug)
-				Logger.Log("Easing " + v.vesselName, Logger.Level.Info);
+				Logger.Log("EaseStart " + v.vesselName, Logger.Level.Info);
 
 			foreach(Part p in v.Parts)
 			{
@@ -321,6 +321,9 @@ namespace KerbalJointReinforcement
 		{
 			if(!easingVessels.Contains(v))
 				return; // we expect, that in this case, we are in an OnDestroy and should not get this call at all
+
+			if(KJRJointUtils.debug)
+				Logger.Log("EaseStop " + v.vesselName, Logger.Level.Info);
 
 			foreach(Part p in v.Parts)
 			{
@@ -447,7 +450,7 @@ namespace KerbalJointReinforcement
 
 			if(KJRJointUtils.debug && (p.attachMethod == AttachNodeMethod.LOCKED_JOINT))
 			{
-				Logger.Log("Already processed part before: " + p.partInfo.name + " (" + p.flightID + ") -> " +
+				Logger.Log("ReinforceAttachJoints -> already processed part " + p.partInfo.name + " (" + p.flightID + ") -> " +
 							p.parent.partInfo.name + " (" + p.parent.flightID + ")", Logger.Level.Warning);
 			}
 
@@ -661,9 +664,6 @@ namespace KerbalJointReinforcement
 			part.breakingForce = Mathf.Infinity;
 			part.breakingTorque = Mathf.Infinity;
 			part.mass = Mathf.Max(part.mass, (part.parent.mass + part.parent.GetResourceMass()) * 0.01f); // We do this to make sure that there is a mass ratio of 100:1 between the clamp and what it's connected to. This helps counteract some of the wobbliness simply, but also allows some give and springiness to absorb the initial physics kick.
-
-			if(KJRJointUtils.debug)
-				Logger.Log("Launch Clamp Break Force / Torque increased", Logger.Level.Info);
 
 			if(part.parent.Rigidbody != null)
 				BuildAndRegisterExtraJoint(part, part.parent, KJRJointTracker.Reason.ReinforceLaunchClamp);

@@ -22,29 +22,20 @@ namespace KerbalJointReinforcement
 			{
 				if(File.Exists(string.Format("{0}/{1}", pathPluginTextures, fileName)))
 				{
-					try
-					{
-						// Logger.Log(string.Format("[GUI] Loading: {0}/{1}", pathPluginTextures, fileName));
-						tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
-						blnReturn = true;
-					}
-					catch(Exception ex)
-					{
-						Logger.Log(string.Format("[GUI] Failed to load the texture:{0} ({1})",
-							string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
-					}
+					tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
+					blnReturn = true;
 				}
 				else
 				{
-					Logger.Log(string.Format("[GUI] Cannot find texture to load:{0}",
-						string.Format("{0}/{1}", pathPluginTextures, fileName)));
+					throw new FileNotFoundException();
 				}
 			}
 			catch(Exception ex)
 			{
-				Logger.Log(string.Format("[GUI] Failed to load (are you missing a file):{0} ({1})",
-					string.Format("{0}/{1}", pathPluginTextures, fileName), ex.Message));
+				Logger.Log(string.Format("Failed to load the texture: {0}/{1} ({2})",
+					pathPluginTextures, fileName, ex.Message), Logger.Level.Error);
 			}
+
 			return blnReturn;
 		}
 

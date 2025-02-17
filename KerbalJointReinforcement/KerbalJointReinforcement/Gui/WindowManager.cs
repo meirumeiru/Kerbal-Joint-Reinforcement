@@ -451,7 +451,7 @@ namespace KerbalJointReinforcement
 			}
 			catch(Exception ex)
 			{
-				Logger.Log(string.Format("[GUI AddAppLauncherButton Exception, {0}", ex.Message), Logger.Level.Error);
+				Logger.Log("AddAppLauncherButton -> " + ex.Message, Logger.Level.Error);
 			}
 
 			Invalidate();
@@ -489,7 +489,7 @@ namespace KerbalJointReinforcement
 			}
 			catch(Exception e)
 			{
-				Logger.Log("[GUI] Failed unregistering AppLauncher handlers," + e.Message);
+				Logger.Log("DestroyAppLauncherButton -> " + e.Message, Logger.Level.Error);
 			}
 		}
 
@@ -500,7 +500,7 @@ namespace KerbalJointReinforcement
 				// only add a new lock if there isnt already one there
 				if(InputLockManager.GetControlLock("KJRKeyboardLock") != ControlTypes.KEYBOARDINPUT)
 				{
-					Logger.Log(String.Format("[GUI] AddingLock-{0}", "KJRKeyboardLock"), Logger.Level.SuperVerbose);
+					Logger.Log("AddingLock KJRKeyboardLock", Logger.Level.SuperVerbose);
 
 					InputLockManager.SetControlLock(ControlTypes.KEYBOARDINPUT, "KJRKeyboardLock");
 				}
@@ -510,7 +510,8 @@ namespace KerbalJointReinforcement
 				// only try and remove it if there was one there in the first place
 				if(InputLockManager.GetControlLock("KJRKeyboardLock") == ControlTypes.KEYBOARDINPUT)
 				{
-					Logger.Log(String.Format("[GUI] Removing-{0}", "KJRKeyboardLock"), Logger.Level.SuperVerbose);
+					Logger.Log("RemovingLock KJRKeyboardLock", Logger.Level.SuperVerbose);
+
 					InputLockManager.RemoveControlLock("KJRKeyboardLock");
 				}
 			}

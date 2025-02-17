@@ -257,6 +257,7 @@ namespace KerbalJointReinforcement
 			if(part.attachJoint.Target.RigidBodyPart != connectedPart)
 			{
 				Logger.Log("CalculateStrength -> connectedPart is not what it is expected to be", Logger.Level.Error);
+
 				momentOfInertia = linearForce = torqueForce = 0f;
 				return false;
 			}
@@ -265,6 +266,8 @@ namespace KerbalJointReinforcement
 
 			if(attachNode == null)
 			{
+				Logger.Log("CalculateStrength -> AttachNode not found", Logger.Level.Error);
+
 				momentOfInertia = linearForce = torqueForce = 0f;
 				return false;
 			}
