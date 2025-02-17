@@ -16,24 +16,20 @@ namespace KerbalJointReinforcement
 		internal static bool LoadImageFromFile(Texture2D tex, string fileName)
 		{
 			string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-			string pathPluginTextures = string.Format("{0}/../Textures", pluginPath);
+			string pathTexture = string.Format("{0}/../Textures/{1}", pluginPath, fileName);
 			bool blnReturn = false;
 			try
 			{
-				if(File.Exists(string.Format("{0}/{1}", pathPluginTextures, fileName)))
-				{
-					tex.LoadImage(File.ReadAllBytes(string.Format("{0}/{1}", pathPluginTextures, fileName)));
-					blnReturn = true;
-				}
-				else
-				{
+				if(!File.Exists(pathTexture))
 					throw new FileNotFoundException();
-				}
+
+				tex.LoadImage(File.ReadAllBytes(pathTexture));
+				blnReturn = true;
 			}
 			catch(Exception ex)
 			{
-				Logger.Log(string.Format("Failed to load the texture: {0}/{1} ({2})",
-					pathPluginTextures, fileName, ex.Message), Logger.Level.Error);
+				Logger.Log(string.Format("Failed to load the texture: {0} ({1})",
+					pathTexture, ex.Message), Logger.Level.Error);
 			}
 
 			return blnReturn;
