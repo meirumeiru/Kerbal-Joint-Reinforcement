@@ -449,9 +449,9 @@ namespace KerbalJointReinforcement
 
 				ApplicationLauncher.Instance.AddOnHideCallback(OnHideCallback);
 			}
-			catch(Exception ex)
+			catch(Exception e)
 			{
-				Logger.Log("AddAppLauncherButton -> " + ex.Message, Logger.Level.Error);
+				Logger.Log("AddAppLauncherButton -> " + e.Message, Logger.Level.Error);
 			}
 
 			Invalidate();
