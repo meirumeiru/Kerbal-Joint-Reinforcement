@@ -266,7 +266,7 @@ namespace KerbalJointReinforcement
 
 			if(attachNode == null)
 			{
-				Logger.Log("CalculateStrength -> AttachNode not found", Logger.Level.Error);
+				// this is normal for some parts such as docking ports
 
 				momentOfInertia = linearForce = torqueForce = 0f;
 				return false;
